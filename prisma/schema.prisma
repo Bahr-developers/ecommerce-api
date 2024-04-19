@@ -1,0 +1,8 @@
+datasource db {
+  url      = env("DATABASE_URL")
+  provider = "postgresql"
+}
+
+generator dacha_client {
+  provider = "prisma-client-js"
+}
