@@ -3,6 +3,71 @@ datasource db {
   provider = "postgresql"
 }
 
-generator dacha_client {
+generator ecommerce_client {
   provider = "prisma-client-js"
+}
+
+enum Status {
+  active   @map("active")
+  inactive @map("inactive")
+}
+
+
+enum TranslateType {
+  error   @map("error")
+  content @map("content")
+
+  @@map("translate_type")
+}
+model Language {
+  id         String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  code       String       @map("code") @db.VarChar(2)
+  title      String       @map("title") @db.VarChar(64)
+  definition Definition[]
+
+  @@id([id])
+  @@unique([code])
+  @@map("language")
+}
+
+model Translate {
+  id         String        @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  code       String        @map("code") @db.VarChar()
+  type       TranslateType @map("type")
+  status     Status        @default(inactive) @map("status")
+  definition Definition[]
+  category   Category[]
+
+  @@id([id])
+  @@unique([code])
+  @@map("translate")
+}
+
+model Definition {
+  id          String @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  translateId String @map("translate_id") @db.Uuid
+  languageId  String @map("language_id") @db.Uuid
+  value       String @map("value") @db.VarChar()
+
+  translate Translate @relation(fields: [translateId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  language  Language  @relation(fields: [languageId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("definition")
+}
+model Category {
+  id          String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  name        String       @map("name") @db.Uuid
+  image_url   String?      @map("image_url") @db.VarChar()
+  category_id String?      @map("category_id") @db.Uuid
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  subcategories Category[] @relation("SubcategoryToCategory")
+
+
+  translate Translate       @relation(fields: [name], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  category    Category?     @relation("SubcategoryToCategory", fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("category")
 }
