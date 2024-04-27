@@ -3,6 +3,158 @@ datasource db {
   provider = "postgresql"
 }
 
-generator dacha_client {
+generator ecommerce_client {
   provider = "prisma-client-js"
+}
+
+enum Status {
+  active   @map("active")
+  inactive @map("inactive")
+}
+
+
+enum TranslateType {
+  error   @map("error")
+  content @map("content")
+
+  @@map("translate_type")
+}
+model Language {
+  id         String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  code       String       @map("code") @db.VarChar(2)
+  title      String       @map("title") @db.VarChar(64)
+  definition Definition[]
+
+  @@id([id])
+  @@unique([code])
+  @@map("language")
+}
+
+model Translate {
+  id         String        @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  code       String        @map("code") @db.VarChar()
+  type       TranslateType @map("type")
+  status     Status        @default(inactive) @map("status")
+  definition Definition[]
+  category   Category[]
+  properties_on_product   PropertiesOnProduct[]
+  properties   Properties[]
+
+  @@id([id])
+  @@unique([code])
+  @@map("translate")
+}
+
+model Definition {
+  id          String @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  translateId String @map("translate_id") @db.Uuid
+  languageId  String @map("language_id") @db.Uuid
+  value       String @map("value") @db.VarChar()
+
+  translate Translate @relation(fields: [translateId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  language  Language  @relation(fields: [languageId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("definition")
+}
+model Category {
+  id          String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  name        String       @map("name") @db.Uuid
+  image_url   String?      @map("image_url") @db.VarChar()
+  category_id String?      @map("category_id") @db.Uuid
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  product    Product[]
+  subcategories Category[] @relation("SubcategoryToCategory")
+
+
+  translate Translate       @relation(fields: [name], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  category    Category?     @relation("SubcategoryToCategory", fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("category")
+}
+model Product {
+  id          String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  title       String       @map("title") @db.Uuid
+  description String       @map("description") @db.Uuid
+  price       Int          @map("price") @db.Integer()
+  count       Int          @map("count") @db.Integer()
+  category_id String       @map("category_id") @db.Uuid
+  image_urls  String[]     @map("image_url") @db.VarChar()
+  video_url   String?       @map("video_url") @db.VarChar()
+  status      Status        @default(active) @map("status")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  createdBy   String       @map("createdBy") @db.Uuid()
+
+  properties_on_product   PropertiesOnProduct[]
+  wishlist                Wishlist[]
+  cart                    Cart[]
+  category    Category     @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user    User             @relation(fields: [createdBy], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  @@id([id])
+  @@map("product")
+}
+model Properties {
+  id          String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  name        String       @map("name") @db.Uuid
+
+  properties_on_product    PropertiesOnProduct[]
+  translate Translate       @relation(fields: [name], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  @@id([id])
+  @@map("properties")
+}
+model PropertiesOnProduct {
+  id           String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  productId    String       @map("productId") @db.Uuid
+  propertiesId String       @map("propertiesId") @db.Uuid
+  value        String       @map("value") @db.Uuid
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  translate Translate @relation(fields: [value], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  properties  Properties  @relation(fields: [propertiesId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("properties_on_product")
+}
+model User {
+  id           String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  first_name   String       @map("first_name") @db.VarChar()
+  last_name    String       @map("last_name") @db.VarChar()
+  email        String       @map("email") @db.VarChar()
+  phone        String       @map("phone") @db.VarChar()
+  password     String?       @map("password") @db.VarChar()
+  address      String       @map("addres") @db.VarChar()
+  image        String?       @map("image") @db.VarChar()
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  products   Product[]
+  wishlist   Wishlist[]
+  cart   Cart[]
+
+  @@id([id])
+  @@map("user")
+}
+model Wishlist {
+  id        String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  userId    String          @map("userId") @db.Uuid
+  productId String          @map("productId") @db.Uuid
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("wishlist")
+}
+model Cart {
+  id        String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  userId    String       @map("userId") @db.Uuid
+  productId String       @map("productId") @db.Uuid
+  quantity  Int          @map("quantity") @db.Integer
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("cart")
 }

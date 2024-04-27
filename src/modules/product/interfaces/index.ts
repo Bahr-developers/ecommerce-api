@@ -1,0 +1,7 @@
+export * from './create-product.interface'
+export * from './update-product.interface'
+export * from './add-one-product-image.interface'
+export * from './add-one-product-video.interface'
+export * from './delete-one-product-image.interface'
+export * from './delete-one-product-video.interface'
+export * from './search-product.interface'
