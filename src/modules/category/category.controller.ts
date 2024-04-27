@@ -37,6 +37,14 @@ import { FileType } from './interfaces';
       return await this.#_service.getCategoryList(languageCode);
     }
   
+    @Get('find/:id')
+    async getSingleCategoryList(
+    @Param('id') categoryId:string,
+    @Headers('accept-language') languageCode: string,
+    ): Promise<Category[]> {
+      return await this.#_service.getSingleCategory(languageCode, categoryId);
+    }
+  
     @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor('image'))
     @Post('add')

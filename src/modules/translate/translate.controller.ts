@@ -49,8 +49,8 @@ import {
     }
   
     @Post('add')
-    async createTranslate(@Body() payload: CreateTranslateDto): Promise<void> {
-      await this.#_service.createTranslate(payload);
+    async createTranslate(@Body() payload: CreateTranslateDto): Promise<string> {
+      return await this.#_service.createTranslate(payload);
     }
   
     @Patch('edit/:id')

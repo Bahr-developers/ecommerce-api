@@ -5,7 +5,11 @@ import { databaseConfig } from './config';
 import { minioConfig } from './config/minio.config';
 import { CategoryModule } from './modules/category/category.module';
 import { LanguageModule } from './modules/language/language.module';
+import { ProductModule } from './modules/product/product.module';
+import { PropertyModule } from './modules/properties/properties.module';
 import { TranslateModule } from './modules/translate/translate.module';
+import { UserModule } from './modules/user/user.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -16,7 +20,11 @@ import { TranslateModule } from './modules/translate/translate.module';
     LanguageModule,
     TranslateModule,
     MinioModule,
-    CategoryModule
+    CategoryModule,
+    PropertyModule,
+    UserModule,
+    ProductModule,
+    WishlistModule
   ],
 })
 export class AppModule {}

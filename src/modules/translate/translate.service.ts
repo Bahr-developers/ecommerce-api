@@ -59,7 +59,7 @@ export class TranslateService {
     });
   }
 
-  async createTranslate(payload: CreateTranslateInterface): Promise<void> {
+  async createTranslate(payload: CreateTranslateInterface): Promise<string> {
     await this.#_checkExistingTranslate(payload.code);
 
     for (const code of Object.keys(payload.definition)) {
@@ -83,6 +83,7 @@ export class TranslateService {
         },
       });
     }
+    return translate.id
   }
 
   async getSingleTranslate(

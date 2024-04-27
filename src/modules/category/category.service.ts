@@ -8,22 +8,26 @@ import {
 import { PrismaService } from '../../prisma';
 import { MinioService } from './../../client/minio/minio.service';
 import { TranslateService } from '../translate/translate.service';
+import { isUUID } from 'class-validator';
+import { ProductService } from '../product/product.service';
 
 @Injectable()
 export class CategoryService {
     #_prisma: PrismaService;
     #_minio: MinioService;
     #_service: TranslateService;
+    #_product: ProductService;
   
-    constructor(prisma: PrismaService, minio:MinioService, service:TranslateService) {
+    constructor(prisma: PrismaService, minio:MinioService, service:TranslateService, product:ProductService) {
       this.#_prisma = prisma;
       this.#_minio = minio;
       this.#_service = service;
+      this.#_product = product
     }
 
   async createCategory(payload: CreateCategoryInterface): Promise<void> {
-    // await this.#_checkExistingCategory(payload.name);
-    // await this.checkTranslate(payload.name);    
+    await this.#_checkExistingCategory(payload.name);
+    await this.checkTranslate(payload.name);    
     
     let image = ''
 
@@ -57,8 +61,62 @@ export class CategoryService {
     );
   }
 
+  async getSingleCategory(languageCode:string, id:string): Promise<Category[]> {
+    await this.#_checkCategory(id)
+    const data = await this.#_prisma.category.findMany({where:{id:id}, include:{subcategories:{include:{product:true}}}})
+    let result = [];
+
+    for (let x of data) {
+      let subcategories = [];
+      const category: any = {};
+
+      category.id = x.id;
+      const category_name = await this.#_service.getSingleTranslate({
+        translateId: x.name.toString(),
+        languageCode: languageCode,
+    })      
+    category.name = category_name.value;  
+    category.image_url = x.image_url;
+    const addTo = category.name.split(' ')
+    let to = ''
+    for(let item of addTo){
+      to+=item
+      to+='-'
+    }
+    to+=category.id
+    category.to = to
+    for(const item of x.subcategories){
+        let subcategory:any ={}
+
+        subcategory.id = item.id;
+        const subcategory_name = await this.#_service.getSingleTranslate({
+            translateId: item.name.toString(),
+            languageCode: languageCode,
+        }) 
+        subcategory.name = subcategory_name.value;      
+        subcategory.image_url = item.image_url;
+        const addTo = subcategory.name.split(' ')
+        let to = ''
+        for(let item of addTo){
+          to+=item
+          to+='-'
+        }
+        to+=subcategory.id
+        subcategory.to = to
+        let products = []
+        for(const product of item.product){
+          products.push(await this.#_product.getSingleProduct(languageCode, product.id))
+        }
+        subcategory.products = products
+        category.subcategories = subcategory
+    }    
+      result.push(category)
+    }
+    return result
+  }
+
   async getCategoryList(languageCode: string): Promise<Category[]> {
-    const data = await this.#_prisma.category.findMany({include:{subcategories:true}})
+    const data = await this.#_prisma.category.findMany({include:{subcategories:{include:{product:true}}}})
 
     let result = [];
 
@@ -81,8 +139,13 @@ export class CategoryService {
             translateId: item.name.toString(),
             languageCode: languageCode,
         }) 
+        let products = []
+        for(const product of item.product){
+          products.push(await this.#_product.getSingleProduct(languageCode, product.id))
+        }
         subcategory.name = subcategory_name.value;      
         subcategory.image_url = item.image_url;
+        subcategory.products = products
 
         category.subcategories = subcategory
     }    
