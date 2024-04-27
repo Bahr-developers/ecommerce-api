@@ -28,6 +28,14 @@ export class UpdateUserDto implements Omit<UpdateUserInterface, 'id'> {
   address?: string;
 
   @ApiProperty({
+    example: 'qwerty123',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  password?: string;
+
+  @ApiProperty({
     example: '+998977777777',
     required: false,
   })

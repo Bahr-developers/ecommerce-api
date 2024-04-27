@@ -14,7 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
   import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
   import { Category, User } from '@prisma/client';
 import { FileType } from '../category/interfaces';
-import { CreateUserDto } from './dtos';
+import { CreateUserDto, UpdateUserDto } from './dtos';
 import { UserService } from './user.service';
   
   @ApiBearerAuth("JWT")
@@ -32,8 +32,9 @@ import { UserService } from './user.service';
   
     @Get('find/all')
     async getTranslateList(
+      @Headers('accept-language') languageCode: string,
     ): Promise<User[]> {
-      return await this.#_service.getUserList();
+      return await this.#_service.getUserList(languageCode);
     }
   
     @ApiConsumes('multipart/form-data')
@@ -46,23 +47,23 @@ import { UserService } from './user.service';
       await this.#_service.createUser({...payload, image});
     }
 
-    // @ApiConsumes('multipart/form-data')
-    // @Patch('edit/:id')
-    // @UseInterceptors(FileInterceptor('image'))
-    // async updateCategory(
-    //   @Param('id') restourantId: string,
-    //   @Body() payload: UpdateCategoryDto,
-    //   @UploadedFile() image: any,
-    // ): Promise<void> {
-    //   await this.#_service.updateCategory({
-    //     ...payload,
-    //     id: restourantId,
-    //     image,
-    //   });
-    // }
+    @ApiConsumes('multipart/form-data')
+    @Patch('edit/:id')
+    @UseInterceptors(FileInterceptor('image'))
+    async updateUser(
+      @Param('id') restourantId: string,
+      @Body() payload: UpdateUserDto,
+      @UploadedFile() image: any,
+    ): Promise<void> {
+      await this.#_service.updateUser({
+        ...payload,
+        id: restourantId,
+        image,
+      });
+    }
   
-    // @Delete('delete/:id')
-    // async deleteCategory(@Param('id') id: string): Promise<void> {
-    //   await this.#_service.deleteCategory(id);
-    // }
+    @Delete('delete/:id')
+    async deleteUser(@Param('id') id: string): Promise<void> {
+      await this.#_service.deleteUser(id);
+    }
 }

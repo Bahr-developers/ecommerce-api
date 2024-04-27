@@ -28,6 +28,14 @@ export class CreateUserDto implements CreateUserInterface {
   address: string;
 
   @ApiProperty({
+    example: 'qwerty123',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  password?: string;
+
+  @ApiProperty({
     example: '+998977777777',
     required: true,
   })
