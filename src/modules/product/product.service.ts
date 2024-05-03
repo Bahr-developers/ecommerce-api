@@ -34,8 +34,9 @@ import { trace } from 'console';
     
     async createProduct(payload: CreateProductInterface): Promise<void> {      
       await this.#_checkCategory(payload.category_id);
-
-      const propertyOnProduct = JSON.parse(`${payload.properties}`);
+      
+      const propertyOnProduct = JSON.parse(`${payload.properties}`);      
+      
       for(const item of propertyOnProduct){
         await this.#_checkProperty(item.property_id)
       }
@@ -133,7 +134,6 @@ import { trace } from 'console';
             status: 'active',
           },}
         );
-      console.log(newPropertyOnProduct);
     }        
       await this.#_prisma.translate.update(
       { where: {
@@ -163,7 +163,6 @@ import { trace } from 'console';
   
       let result = [];
       for (const product of data) {   
-        console.log(product);
            
         if (
           product.title
@@ -571,8 +570,13 @@ import { trace } from 'console';
       }
     }
 
-    async #_checkId(id: string): Promise<void> {
-      if (id.length!=36) {
+    async #_checkId(id: string): Promise<void> {      
+      if (id) {
+        if(id.length!=36){
+          throw new UnprocessableEntityException(`Invalid ${id} UUID`);
+        }
+      }
+      else{
         throw new UnprocessableEntityException(`Invalid ${id} UUID`);
       }
     }

@@ -7,5 +7,6 @@ export declare interface UpdateUserInterface {
     address?: string;
     phone?: string;
     image?: any;
+    role: 'user' | 'super_admin'
 }
   

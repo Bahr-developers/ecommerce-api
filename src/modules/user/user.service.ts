@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
     ConflictException,
     Injectable
   } from '@nestjs/common';
@@ -24,11 +25,22 @@ import * as bcrypt from 'bcrypt'
         this.#_product = product;
       }
   
-    async createUser(payload: CreateUserInterface): Promise<void> {
+     async createUser(payload: CreateUserInterface): Promise<void> {
         let image = ''
         let hashed_password = ''
-        if(payload.password.length){
-          const hashed_password = await bcrypt.hash(payload.password, 7)
+        let address = ''
+
+        const foundedUser = await this.#_prisma.user.findFirst({where:{phone:payload.phone}})
+        if(foundedUser){
+          throw new BadRequestException("There is a user with this phone number")
+        }
+
+        if(payload.address){
+          address = payload.address
+        }
+
+        if(payload.password){
+          hashed_password = await bcrypt.hash(payload.password, 7)
         }
 
         if(payload.image){
@@ -38,17 +50,31 @@ import * as bcrypt from 'bcrypt'
           });
           image = file.fileName
         }
-      await this.#_prisma.user.create({
-          data: {
-              first_name: payload.first_name,
-              last_name: payload.last_name,
-              email: payload.email,
-              phone: payload.phone,
-              address: payload.address,
-              password: hashed_password,
-              image:image
-          },
-            })
+        if(payload.role){
+          await this.#_prisma.user.create({
+              data: {
+                  first_name: payload.first_name,
+                  last_name: payload.last_name,
+                  email: payload.email,
+                  phone: payload.phone,
+                  address: address,
+                  password: hashed_password,
+                  image:image,
+                  role: payload.role
+              }})
+        }else{
+          await this.#_prisma.user.create({
+              data: {
+                  first_name: payload.first_name,
+                  last_name: payload.last_name,
+                  email: payload.email,
+                  phone: payload.phone,
+                  address: address,
+                  password: hashed_password,
+                  image:image,
+              },
+                })
+        }    
     }
   
     async getUserList(languageCode:string): Promise<User[]> {

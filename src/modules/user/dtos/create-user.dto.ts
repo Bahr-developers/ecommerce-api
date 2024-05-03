@@ -1,6 +1,7 @@
-import { IsString, IsArray, IsPhoneNumber, IsNotEmpty, IsEmail, IsOptional } from 'class-validator';
+import { IsString, IsArray, IsPhoneNumber, IsNotEmpty, IsEmail, IsOptional, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CreateUserInterface } from '../interfaces';
+import { $Enums, Role } from '@prisma/client';
 
 export class CreateUserDto implements CreateUserInterface {
   @ApiProperty({
@@ -23,8 +24,8 @@ export class CreateUserDto implements CreateUserInterface {
     example: 'Tashkent, Uzbekistan',
     required: true,
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   address: string;
 
   @ApiProperty({
@@ -60,4 +61,13 @@ export class CreateUserDto implements CreateUserInterface {
   })
   @IsOptional()
   image?: any;
+
+  @ApiProperty({
+    examples: ['super_admin', 'user'],
+    enum: Role,
+    required: true
+  })
+  @IsEnum(Role)
+  @IsString()
+  role: $Enums.Role;
 }
