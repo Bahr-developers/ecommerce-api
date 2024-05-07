@@ -13,6 +13,7 @@ import {
   GetSingleTranslateResponse,
   UpdateTranslateRequest,
 } from './interfaces';
+import { log } from 'console';
 
 @Injectable()
 export class TranslateService {
@@ -43,6 +44,52 @@ export class TranslateService {
     return await this.#_prisma.translate.findMany({
       where: {
         status: 'inactive',
+      },
+      include: {
+        definition: {
+          select: {
+            value: true,
+            language: {
+              select: {
+                code: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async searchTranslate(payload): Promise<Translate[]> {
+
+    const data = await this.getTranslateList();
+    
+    
+    if (!payload.code.length || !data.length) {
+      return data;
+    }
+  
+    let result = [];
+    for (const translate of data) {      
+      
+      if (
+        translate.code
+          .toString()
+          .toLocaleLowerCase()
+          .includes(payload.code.toLocaleLowerCase())
+      ) {
+        
+        result.push(translate);
+      }
+    }
+    return result;
+  }
+
+
+  async getSingleTranslateByCode(code:string): Promise<Translate[]> {
+    return await this.#_prisma.translate.findMany({
+      where: {
+        code: code
       },
       include: {
         definition: {
@@ -159,7 +206,6 @@ export class TranslateService {
 
   async deleteTranslate(id: string) {
     await this.#_checkUUID(id);
-
     await this.#_prisma.translate.delete({
       where: { id },
       include: {

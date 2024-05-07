@@ -7,6 +7,7 @@ import {
     Param,
     Patch,
     Post,
+    Query,
     UploadedFile,
     UseInterceptors,
   } from '@nestjs/common';
@@ -73,5 +74,16 @@ import { FileType } from './interfaces';
     @Delete('delete/:id')
     async deleteCategory(@Param('id') id: string): Promise<void> {
       await this.#_service.deleteCategory(id);
+    }
+
+    @Get('/search')
+    async searchCategory(
+      @Headers('accept-language') languageCode: string,
+      @Query('name') name: string,
+    ): Promise<Category[]> {
+      return await this.#_service.searchCategory({
+        name,
+        languageCode,
+      });
     }
 }

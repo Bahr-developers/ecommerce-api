@@ -1,4 +1,4 @@
-import { CreateCategoryInterface, UpdateCategoryInterface } from './interfaces';
+import { CreateCategoryInterface, SearchCategoryInterface, UpdateCategoryInterface } from './interfaces';
 import { Category } from '@prisma/client';
 import {
   ConflictException,
@@ -8,7 +8,6 @@ import {
 import { PrismaService } from '../../prisma';
 import { MinioService } from './../../client/minio/minio.service';
 import { TranslateService } from '../translate/translate.service';
-import { isUUID } from 'class-validator';
 import { ProductService } from '../product/product.service';
 
 @Injectable()
@@ -26,7 +25,6 @@ export class CategoryService {
     }
 
   async createCategory(payload: CreateCategoryInterface): Promise<void> {
-    await this.#_checkExistingCategory(payload.name);
     await this.checkTranslate(payload.name);    
     
     let image = ''
@@ -56,7 +54,7 @@ export class CategoryService {
 
     await this.#_prisma.translate.update({
         where:{id:payload.name},
-        data:{status:"inactive"}
+        data:{status:"active"}
     }
     );
   }
@@ -156,12 +154,14 @@ export class CategoryService {
 
   async updateCategory(payload: UpdateCategoryInterface): Promise<void> {
     await this.#_checkCategory(payload.id);    
+    const updated_category = await this.#_prisma.category.findFirst({where:{id:payload.id}})
     if(payload.category_id){
       await this.#_prisma.category.update({where:{id:payload.id},
          data:{category_id:payload.category_id}})
     }
     if(payload.name){
       await this.checkTranslate(payload.name);
+      await this.#_prisma.translate.delete({where:{id:updated_category.name}})
       await this.#_prisma.category.update({
         where:{id:payload.id}, 
         data:{name:payload.name
@@ -190,13 +190,33 @@ export class CategoryService {
     await this.#_checkCategory(id);
     const deleteImageFile = await this.#_prisma.category.findFirst({where:{id:id}});
     if(deleteImageFile.image_url){
-          await this.#_minio.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
-        }
-        await this.#_prisma.translate.update(
-          {where:{id: deleteImageFile.name,},
-          data:{status: 'inactive'}}
-        );
-        await this.#_prisma.category.delete({ where:{id: id} });
+      await this.#_minio.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
+    }
+    await this.#_prisma.translate.delete({where:{id: deleteImageFile.name}});
+    await this.#_prisma.category.delete({ where:{id: id} });
+  }
+
+  async searchCategory(payload: SearchCategoryInterface): Promise<Category[]> {
+
+    const data = await this.getCategoryList(payload.languageCode);
+    
+    if (!payload.name.length || !data.length) {
+      return data;
+    }
+
+    let result = [];
+    for (const category of data) {      
+      if (
+        category.name
+          .toString()
+          .toLocaleLowerCase()
+          .includes(payload.name.toLocaleLowerCase())
+      ) {
+        
+        result.push(category);
+      }
+    }
+    return result;
   }
 
   async #_checkExistingCategory(name: string): Promise<void> {

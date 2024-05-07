@@ -8,7 +8,7 @@ declare interface JWTConfigOptions {
 export const jwtConfig = registerAs<JWTConfigOptions>(
   'jwt',
   (): JWTConfigOptions => ({
-    accessKey: process.env.ACCESS_KEY,
+    accessKey: process.env.JWT_ACCESS_KEY,
     refreshKey: process.env.REFRESH_KEY,
   }),
 );

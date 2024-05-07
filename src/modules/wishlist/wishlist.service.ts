@@ -24,7 +24,6 @@ export class WishlistService {
   }})
   }
 
-
   async getWishlist(): Promise<Wishlist[]> {
     const data = await this.#_prisma.wishlist.findMany()
 

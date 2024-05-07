@@ -7,6 +7,7 @@ import {
     Param,
     Patch,
     Post,
+    Query,
     UploadedFile,
     UseInterceptors,
   } from '@nestjs/common';
@@ -41,6 +42,17 @@ import { PropertyService } from './properties.service';
     @Headers('accept-language') languageCode: string,
     ): Promise<Properties[]> {
       return await this.#_service.getSingleProperty(languageCode, categoryId);
+    }
+
+    @Get('/search')
+    async searchProperty(
+      @Headers('accept-language') languageCode: string,
+      @Query('name') name: string,
+    ): Promise<Properties[]> {
+      return await this.#_service.searchProperty({
+        name,
+        languageCode,
+      });
     }
   
     @Post('add')

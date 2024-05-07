@@ -45,7 +45,7 @@ export class LanguageService {
   async #_checkExistingLanguage(code: string): Promise<void> {
     const language = await this.#_prisma.language.findFirst({
       where: {
-        code,
+        code
       },
     });
 

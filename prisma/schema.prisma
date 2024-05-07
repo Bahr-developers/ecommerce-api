@@ -41,9 +41,6 @@ model Translate {
   type       TranslateType @map("type")
   status     Status        @default(inactive) @map("status")
   definition Definition[]
-  category   Category[]
-  properties_on_product   PropertiesOnProduct[]
-  properties   Properties[]
 
   @@id([id])
   @@unique([code])
@@ -73,7 +70,6 @@ model Category {
   subcategories Category[] @relation("SubcategoryToCategory")
 
 
-  translate Translate       @relation(fields: [name], references: [id], onDelete: Cascade, onUpdate: NoAction)
   category    Category?     @relation("SubcategoryToCategory", fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([id])
@@ -106,7 +102,6 @@ model Properties {
   name        String       @map("name") @db.Uuid
 
   properties_on_product    PropertiesOnProduct[]
-  translate Translate       @relation(fields: [name], references: [id], onDelete: Cascade, onUpdate: NoAction)
   @@id([id])
   @@map("properties")
 }
@@ -117,7 +112,6 @@ model PropertiesOnProduct {
   value        String       @map("value") @db.Uuid
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  translate Translate @relation(fields: [value], references: [id], onDelete: Cascade, onUpdate: NoAction)
   properties  Properties  @relation(fields: [propertiesId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([id])

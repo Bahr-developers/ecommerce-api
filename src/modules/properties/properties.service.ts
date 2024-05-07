@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { TranslateService } from '../translate/translate.service';
-import { CreatePropertiesInterface, UpdatePropertiesInterface } from './interfaces';
+import { CreatePropertiesInterface, SearchPropertyInterface, UpdatePropertiesInterface } from './interfaces';
 import { Properties } from '@prisma/client';
 
 @Injectable()
@@ -71,31 +71,54 @@ export class PropertyService {
     return result
 }
 
+async searchProperty(payload: SearchPropertyInterface): Promise<Properties[]> {
+
+  const data = await this.getPropertyList(payload.languageCode);
+  
+  if (!payload.name.length || !data.length) {
+    return data;
+  }
+
+  let result = [];
+  for (const property of data) {      
+    if (
+      property.name
+        .toString()
+        .toLocaleLowerCase()
+        .includes(payload.name.toLocaleLowerCase())
+    ) {
+      
+      result.push(property);
+    }
+  }
+  return result;
+}
+
+
   async updateProperties(payload: UpdatePropertiesInterface): Promise<void> {
     await this.#_checkProperty(payload.id);    
+    const propety = await this.#_prisma.properties.findFirst({where:{id:payload.id}})
     if(payload.name){
       await this.checkTranslate(payload.name);
+      await this.#_prisma.translate.delete({where:{id:propety.name}})
       await this.#_prisma.properties.update({
         where:{id:payload.id}, 
         data:{name:payload.name
-      }})
-      await this.#_prisma.translate.update({
-        where:{id: payload.name},
-        data:{status: 'active'}
+        }})
+        await this.#_prisma.translate.update({
+          where:{id: payload.name},
+          data:{status: 'active'}
+        }
+        );
       }
-      );
     }
-  }
-
-  async deleteProperty(id: string): Promise<void> {
+    
+    async deleteProperty(id: string): Promise<void> {
     await this.#_checkProperty(id);
     const updateProperty = await this.#_prisma.properties.findFirst({where:{id:id}});
-        await this.#_prisma.translate.update(
-          {where:{id: updateProperty.name,},
-          data:{status: 'inactive'}}
-        );
-        await this.#_prisma.category.delete({ where:{id: id} });
-  }
+    await this.#_prisma.translate.delete({where:{id:updateProperty.name}})
+    await this.#_prisma.properties.delete({ where:{id: id} });
+    }
 
   async #_checkProperty(id: string): Promise<void> {
     const properties = await this.#_prisma.properties.findFirst({where:{id:id}});

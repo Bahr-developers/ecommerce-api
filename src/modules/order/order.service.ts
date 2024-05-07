@@ -5,7 +5,7 @@ import {
     UnprocessableEntityException
   } from '@nestjs/common';
   import { PrismaService } from '../../prisma';
-import { CreateOrderInterface, UpdateOrderInterface } from './interfaces';
+import { CreateOrderInterface, GetFilteredOrderesRequest, UpdateOrderInterface } from './interfaces';
 import { ProductService } from '../product/product.service';
 import { UserService } from '../user/user.service';
 import { Order } from '@prisma/client';
@@ -89,12 +89,95 @@ import { Order } from '@prisma/client';
               }})
             }
     }
-  
-  
-    async getOrderList(): Promise<Order[]> {
-      const data = await this.#_prisma.order.findMany({include:{orderitem:true}})
+
+    async getOrdersByUserId(userId): Promise<Order[]> {
+      const data = await this.#_prisma.order.findMany({where:{customer_id:userId}})
       return data
-  }
+    }
+
+    async getFilteredOrderList(
+      payload: GetFilteredOrderesRequest,
+    ): Promise<Order[]> {
+      const datas = []
+      const result = []
+      let data:any = []
+      if(payload.status){
+        data = await this.#_prisma.order.findMany({where:{status:payload.status}})
+      }else{
+        data = await this.#_prisma.order.findMany()
+      }
+      if(payload.first_date){
+        const isDateString = await this.isDateValid(payload.first_date);
+        if(isDateString==false){
+          throw new BadRequestException("First Date is Not IsDateString")
+        }
+        let date = payload.first_date.split('-')
+        for(const item of data){ 
+          if(Number(date[2]<item.order_date.getFullYear())){
+            datas.push(item)
+          }
+          if(Number(date[2])==item.order_date.getFullYear() && (Number(date[1]))<item.order_date.getMonth()+1){            
+            datas.push(item)
+          }          
+          if(Number(date[2])==item.order_date.getFullYear() && Number(date[1])==item.order_date.getMonth()+1 && Number(date[0])<=item.order_date.getDay()){
+            datas.push(item)
+          }
+        }
+      }
+      if(payload.second_date){
+        const isDateString = await this.isDateValid(payload.second_date);
+        if(isDateString==false){
+          throw new BadRequestException("Second Date is Not IsDateString")
+        }
+        if(datas[0]){
+          let date = payload.second_date.split('-')
+          for(const item of datas){ 
+            if(Number(date[2]>item.order_date.getFullYear())){
+              result.push(item)
+            }
+            if(Number(date[2])==item.order_date.getFullYear() && (Number(date[1]))>item.order_date.getMonth()+1){            
+              result.push(item)
+            }          
+            if(Number(date[2])==item.order_date.getFullYear() && Number(date[1])==item.order_date.getMonth()+1 && Number(date[0])>=item.order_date.getDay()){
+              result.push(item)
+            }
+        }
+        }else{
+          let date = payload.second_date.split('-')
+          for(const item of data){ 
+            if(Number(date[2]>item.order_date.getFullYear())){
+              result.push(item)
+            }
+            if(Number(date[2])==item.order_date.getFullYear() && (Number(date[1]))>item.order_date.getMonth()+1){            
+              result.push(item)
+            }          
+            if(Number(date[2])==item.order_date.getFullYear() && Number(date[1])==item.order_date.getMonth()+1 && Number(date[0])>=item.order_date.getDay()){
+              result.push(item)
+            }
+        }
+        }
+      }
+      if(datas[0] && !payload.second_date){
+        return datas
+      }else{        
+        return result
+      }
+    }
+
+    async getOrderList(page?: number, limit?: number): Promise<Order[]> {
+      const defaultLimit = 20;
+      const defaultPage = 1;
+    
+      const skip = ((page || defaultPage) - 1) * (limit || defaultLimit);
+    
+      const data = await this.#_prisma.order.findMany({
+        include: { orderitem: true },
+        skip,
+        take: limit || defaultLimit,
+      });
+    
+      return data;
+    }
   
     async updateOrder(payload: UpdateOrderInterface): Promise<void> {
       await this.#_checkOrder(payload.id)
@@ -146,6 +229,12 @@ import { Order } from '@prisma/client';
       if (!translate) {
         throw new ConflictException(`Translate with ${id} is not exists`);
       }
+    }
+    async isDateValid(dateString: string): Promise<boolean> {
+      const [year, month, day] = dateString.split('-');
+      const isValidFormat = /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+      const isValidDate = Number(day) <= 31 && Number(month) <= 12;
+      return isValidFormat && isValidDate;
     }
   }
   

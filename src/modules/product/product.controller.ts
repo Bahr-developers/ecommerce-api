@@ -36,8 +36,10 @@ import { DeleteProductImageDto } from './dtos/delete-one-product-image.dto';
     @Get('find/all')
     async getProductList(
       @Headers('accept-language') languageCode: string,
+      @Query('page') page?: number,
+      @Query('limit') limit?: number,
     ): Promise<Product[]> {
-      return await this.#_productService.getProductList(languageCode);
+      return await this.#_productService.getProductList(languageCode, page, limit);
     }
   
     @Get('find/one/:id')
