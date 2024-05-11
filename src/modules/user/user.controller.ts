@@ -7,6 +7,7 @@ import {
     Param,
     Patch,
     Post,
+    Req,
     UploadedFile,
     UseInterceptors,
   } from '@nestjs/common';
@@ -31,35 +32,46 @@ import { UserService } from './user.service';
     }
   
     @Get('find/all')
-    async getTranslateList(
-      @Headers('accept-language') languageCode: string,
+    async getUserList(
     ): Promise<User[]> {
-      return await this.#_service.getUserList(languageCode);
+      return await this.#_service.getUserList();
+    }
+
+    @Get('/single')
+    async getSingleUser(@Req() req: any): Promise<any> {
+      return await this.#_service.getSingleUser(req.userId);
+    }
+  
+    @Get('/single/user/by/:userId')
+    async getSingleUserByUserID(@Param("userId") userId: string): Promise<User> {
+      return await this.#_service.getSingleUser(userId);
     }
   
     @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor('image'))
     @Post('add')
-    async createTranslate(
+    async createUser(
         @Body() payload: CreateUserDto,
         @UploadedFile() image: FileType,
+        @Req() req: any
         ): Promise<void> {
-      await this.#_service.createUser({...payload, image});
+      await this.#_service.createUser({...payload, image}, req.userId);
     }
 
     @ApiConsumes('multipart/form-data')
     @Patch('edit/:id')
     @UseInterceptors(FileInterceptor('image'))
     async updateUser(
-      @Param('id') restourantId: string,
+      @Param('id') userId: string,
       @Body() payload: UpdateUserDto,
       @UploadedFile() image: any,
+      @Req() req: any
     ): Promise<void> {
       await this.#_service.updateUser({
+        id: userId,
         ...payload,
-        id: restourantId,
         image,
-      });
+      }, req.userId);
     }
   
     @Delete('delete/:id')

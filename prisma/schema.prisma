@@ -12,6 +12,12 @@ enum Status {
   inactive @map("inactive")
 }
 
+enum Role_Type {
+  super_admin   @map("super_admin")
+  admin   @map("admin")
+  user @map("user")
+}
+
 
 enum TranslateType {
   error   @map("error")
@@ -23,6 +29,7 @@ model Language {
   id         String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
   code       String       @map("code") @db.VarChar(2)
   title      String       @map("title") @db.VarChar(64)
+  image_url   String      @map("image_url") @db.VarChar()
   definition Definition[]
 
   @@id([id])
@@ -34,11 +41,8 @@ model Translate {
   id         String        @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
   code       String        @map("code") @db.VarChar()
   type       TranslateType @map("type")
-  status     Status        @default(inactive) @map("status")
+  createdAt   DateTime     @default(now()) @map("created_at")
   definition Definition[]
-  category   Category[]
-  properties_on_product   PropertiesOnProduct[]
-  properties   Properties[]
 
   @@id([id])
   @@unique([code])
@@ -68,7 +72,6 @@ model Category {
   subcategories Category[] @relation("SubcategoryToCategory")
 
 
-  translate Translate       @relation(fields: [name], references: [id], onDelete: Cascade, onUpdate: NoAction)
   category    Category?     @relation("SubcategoryToCategory", fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([id])
@@ -89,6 +92,7 @@ model Product {
 
   properties_on_product   PropertiesOnProduct[]
   wishlist                Wishlist[]
+  orderitem               OrderItem[]
   cart                    Cart[]
   category    Category     @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user    User             @relation(fields: [createdBy], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -100,7 +104,6 @@ model Properties {
   name        String       @map("name") @db.Uuid
 
   properties_on_product    PropertiesOnProduct[]
-  translate Translate       @relation(fields: [name], references: [id], onDelete: Cascade, onUpdate: NoAction)
   @@id([id])
   @@map("properties")
 }
@@ -111,7 +114,6 @@ model PropertiesOnProduct {
   value        String       @map("value") @db.Uuid
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  translate Translate @relation(fields: [value], references: [id], onDelete: Cascade, onUpdate: NoAction)
   properties  Properties  @relation(fields: [propertiesId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([id])
@@ -119,16 +121,22 @@ model PropertiesOnProduct {
 }
 model User {
   id           String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
-  first_name   String       @map("first_name") @db.VarChar()
-  last_name    String       @map("last_name") @db.VarChar()
-  email        String       @map("email") @db.VarChar()
+  first_name   String?       @map("first_name") @db.VarChar()
+  last_name    String?       @map("last_name") @db.VarChar()
+  email        String?       @map("email") @db.VarChar()
   phone        String       @map("phone") @db.VarChar()
-  password     String?       @map("password") @db.VarChar()
-  address      String       @map("addres") @db.VarChar()
-  image        String?       @map("image") @db.VarChar()
-  createdAt   DateTime     @default(now()) @map("created_at")
+  password     String?      @map("password") @db.VarChar()
+  address      String?       @map("addres") @db.VarChar()
+  image        String?      @map("image") @db.VarChar()
+  createdAt   DateTime      @default(now()) @map("created_at")
+  role_type      Role_Type            @default(user) @map("role_type")
 
   products   Product[]
+  users       UserOnRole[]
+  sms   Sms[]
+  userDevice UserDevice[]
+  shipment   Shipment[]
+  order   Order[]
   wishlist   Wishlist[]
   cart   Cart[]
 
@@ -157,4 +165,120 @@ model Cart {
 
   @@id([id])
   @@map("cart")
+}
+model Shipment {
+  id        String             @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  address   String             @map("address") @db.VarChar()
+  region    String             @map("region") @db.VarChar()
+  district  String             @map("district") @db.VarChar()
+  zip_code  String?             @map("zip_code") @db.VarChar()
+  shipment_date   DateTime     @default(now()) @map("created_at")
+  customer_id   String         @map("customer_id") @db.Uuid
+  status      Status        @default(active) @map("status")
+
+
+  order   Order[]
+  user User @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("shipment")
+}
+model Order {
+  id        String             @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  order_date   DateTime        @default(now()) @map("created_at")
+  total_price   Int            @map("total_price") @db.Integer
+  customer_id   String         @map("customer_id") @db.Uuid
+  shipment_id   String         @map("shipment_id") @db.Uuid
+  status      Status        @default(active) @map("status")
+  
+
+  user User @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  orderitem   OrderItem[]
+
+  @@id([id])
+  @@map("order")
+}
+model OrderItem {
+  id        String             @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  quantity   Int               @map("quantity") @db.Integer
+  price   Int                  @map("price") @db.Integer
+  order_id   String            @map("order_id") @db.Uuid
+  product_id   String          @map("product_id") @db.Uuid
+
+  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("order_item")
+}
+model UserDevice {
+  id           String  @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  app_id       String? @map("app_id") @db.VarChar()
+  name         String @map("name") @db.VarChar()
+  model        String @map("model") @db.VarChar()
+  version      String @map("version") @db.VarChar()
+  ip           String? @map("ip") @db.VarChar()
+  refreshToken String  @map("refresh_token") @db.VarChar()
+  accessToken  String  @map("access_token") @db.VarChar()
+  userId       String  @map("user_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("user_device")
+}
+model Sms {
+  id        String             @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  smsCode          String?      @map("sms_code") @db.VarChar()
+  smsExpireTime    String?      @map("sms_time") @db.VarChar()
+  userId       String  @map("user_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("sms")
+}
+model Model {
+  id        String             @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  name      String             @map("name") @db.VarChar()
+
+  permission   Permission[]
+
+  @@id([id])
+  @@map("model")
+}
+model Permission {
+  id        String             @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  name      String             @map("name") @db.VarChar()
+  code      String             @map("code") @db.VarChar()
+  model_id  String             @map("model_id") @db.Uuid()
+
+  model Model @relation(fields: [model_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("permission")
+}
+model Role {
+  id          String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  name        String       @map("name") @db.VarChar()
+  permissions String[]     @map("permissions") @db.Uuid
+  role_type      Role_Type @map("role_type")
+  users       UserOnRole[]
+
+  @@id([id])
+  @@map("role")
+}
+
+model UserOnRole {
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id])
+  roleId     String   @map("role_id") @db.Uuid
+  role       Role     @relation(fields: [roleId], references: [id])
+  assignedAt DateTime @default(now()) @map("assigned_at")
+  assignedBy String   @map("assigned_by") @db.Uuid
+
+  @@id([userId, roleId])
 }

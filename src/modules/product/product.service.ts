@@ -34,8 +34,9 @@ import { trace } from 'console';
     
     async createProduct(payload: CreateProductInterface): Promise<void> {      
       await this.#_checkCategory(payload.category_id);
-
-      const propertyOnProduct = JSON.parse(`${payload.properties}`);
+      
+      const propertyOnProduct = JSON.parse(`${payload.properties}`);      
+      
       for(const item of propertyOnProduct){
         await this.#_checkProperty(item.property_id)
       }
@@ -125,34 +126,8 @@ import { trace } from 'console';
           value:translate_value
         }
       })
-      await this.#_prisma.translate.update(
-        { where: {
-            id: translate_value,
-          },
-          data:{
-            status: 'active',
-          },}
-        );
-      console.log(newPropertyOnProduct);
-    }        
-      await this.#_prisma.translate.update(
-      { where: {
-          id: translate_title,
-        },
-        data:{
-          status: 'active',
-        },}
-      );
-  
-      await this.#_prisma.translate.update(
-        { where: {
-            id: translate_description,
-          },
-          data:{
-            status: 'active',
-          },}
-        );
     }
+  }
   
     async searchProduct(payload: SearchProductInterface): Promise<Product[]> {  
       const data = await this.getProductList(payload.languageCode);
@@ -163,7 +138,6 @@ import { trace } from 'console';
   
       let result = [];
       for (const product of data) {   
-        console.log(product);
            
         if (
           product.title
@@ -236,66 +210,73 @@ import { trace } from 'console';
       }
       return result;
     }
-    async getProductList(languageCode: string): Promise<Product[]> {
-      const data = await this.#_prisma.product.findMany({include:{properties_on_product:
-      {
+    async getProductList(languageCode: string, page?: number, limit?: number): Promise<Product[]> {
+      const defaultLimit = 20;
+      const defaultPage = 1;
+    
+      const skip = ((page || defaultPage) - 1) * (limit || defaultLimit);
+    
+      const data = await this.#_prisma.product.findMany({
         include: {
-          properties: true
-        }
-      }}})
-  
-      let result = [];
-      let propertiesOnProduct = []
-      for (let x of data) {
+          properties_on_product: {
+            include: {
+              properties: true
+            }
+          }
+        },
+        skip,
+        take: Number(limit) || defaultLimit,
+      });
+    
+      const result: Product[] = [];
+      for (const x of data) {
         const title_request = {
           translateId: x.title.toString(),
-          languageCode: languageCode,
+          languageCode,
         };
-  
+    
         const desription_request = {
           translateId: x.description.toString(),
-          languageCode: languageCode,
+          languageCode,
         };
-  
-        const translated_title = await this.#_translate.getSingleTranslate(
-          title_request,
-        );
-        const translated_description = await this.#_translate.getSingleTranslate(
-          desription_request,
-        );
-        for(const value of x.properties_on_product){
-          const property_on_product: any = {}
+    
+        const translated_title = await this.#_translate.getSingleTranslate(title_request);
+        const translated_description = await this.#_translate.getSingleTranslate(desription_request);
+    
+        const propertiesOnProduct = [];
+        for (const value of x.properties_on_product) {
           const value_request = {
             translateId: value.value.toString(),
-            languageCode: languageCode,
+            languageCode,
           };
     
-          const translated_value = await this.#_translate.getSingleTranslate(
-            value_request,
-          );
-          property_on_product.id = value.id
-          property_on_product.key = (await this.#_translate.getSingleTranslate({translateId:value.properties.name, languageCode:languageCode})).value
-          property_on_product.value = translated_value.value
-
-          propertiesOnProduct.push(property_on_product)
+          const translated_value = await this.#_translate.getSingleTranslate(value_request);
+    
+          const property_on_product: any = {};
+          property_on_product.id = value.id;
+          property_on_product.key = (await this.#_translate.getSingleTranslate({ translateId: value.properties.name, languageCode })).value;
+          property_on_product.value = translated_value.value;
+    
+          propertiesOnProduct.push(property_on_product);
         }
-        result.push({
-          id: x.id,
-          title: translated_title.value,
-          description: translated_description.value,
-          image_urls: x.image_urls,
-          price: x.price,
-          count: x.count,
-          category_id:x.category_id,
-          createdBy:x.createdBy,
-          video:x.video_url,
-          status: x.status,
-          properties:propertiesOnProduct
-        });
+        const product:any = {}
+        product.id = x.id,
+        product.title = translated_title.value,
+        product.description = translated_description.value,
+        product.image_urls = x.image_urls,
+        product.price = x.price,
+        product.count = x.count,
+        product.category_id = x.category_id,
+        product.createdBy = x.createdBy,
+        product.video_url = x.video_url,
+        product.status = x.status,
+        product.properties = propertiesOnProduct,
+    
+        result.push(product);
       }
+    
       return result;
     }
-  
     async updateProduct(payload: UpdateProductRequest): Promise<void> {
       await this.#_checkProduct(payload.id);
       
@@ -475,6 +456,8 @@ import { trace } from 'console';
       await this.#_checkProduct(payload.productId);
   
       const foundedProduct = await this.#_prisma.product.findFirst({where:{id:payload.productId}});
+      await this.#_prisma.translate.delete({where:{id:foundedProduct.title}})
+      await this.#_prisma.translate.delete({where:{id:foundedProduct.description}})
   
       if (!foundedProduct.video_url.includes(payload.video_url)) {
         return;
@@ -500,20 +483,7 @@ import { trace } from 'console';
           .removeFile({ fileName: photo })
           .catch((undefined) => undefined);
       }
-  
-      await this.#_prisma.translate.update({
-        where:{ id: deleteImageFile.title },
-        data:{
-          status: 'inactive',
-        }
-      });
-  
-      await this.#_prisma.translate.update({
-        where:{ id: deleteImageFile.description },
-        data:{
-          status: 'inactive',
-        }
-      });  
+ 
       await this.#_prisma.product.delete({where:{id:id}});
     }
   
@@ -571,8 +541,13 @@ import { trace } from 'console';
       }
     }
 
-    async #_checkId(id: string): Promise<void> {
-      if (id.length!=36) {
+    async #_checkId(id: string): Promise<void> {      
+      if (id) {
+        if(id.length!=36){
+          throw new UnprocessableEntityException(`Invalid ${id} UUID`);
+        }
+      }
+      else{
         throw new UnprocessableEntityException(`Invalid ${id} UUID`);
       }
     }

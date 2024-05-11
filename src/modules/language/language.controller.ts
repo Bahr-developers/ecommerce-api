@@ -7,10 +7,14 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CreateLanguageDto, UpdateLanguageDto } from './dtos';
 import { Language } from '@prisma/client';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileType } from '../category/interfaces';
 
 @ApiTags('Language')
 @Controller({
@@ -29,17 +33,25 @@ export class LanguageController {
     return await this.#_service.getLanguageList();
   }
 
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('image'))
   @Post('add')
-  async createLanguage(@Body() payload: CreateLanguageDto): Promise<void> {
-    await this.#_service.createLanguage(payload);
+  async createLanguage(
+    @Body() payload: CreateLanguageDto,
+    @UploadedFile() image: FileType,
+    ): Promise<void> {
+    await this.#_service.createLanguage({ ...payload, image });
   }
 
+  @ApiConsumes('multipart/form-data')
   @Patch('edit/:id')
+  @UseInterceptors(FileInterceptor('image'))
   async updateLanguage(
     @Body() payload: UpdateLanguageDto,
     @Param('id') id: string,
+    @UploadedFile() image: any,
   ): Promise<void> {
-    await this.#_service.updateLanguage({ id, ...payload });
+    await this.#_service.updateLanguage({ id, ...payload, image });
   }
 
   @Delete('delete/:id')

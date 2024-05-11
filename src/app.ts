@@ -2,12 +2,18 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MinioModule } from './client';
 import { databaseConfig } from './config';
+import { jwtConfig } from './config/jwt.config';
 import { minioConfig } from './config/minio.config';
+import { AuthModule } from './modules/auth/auth.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoryModule } from './modules/category/category.module';
 import { LanguageModule } from './modules/language/language.module';
+import { ModelModule } from './modules/model/model.module';
+import { OrderModule } from './modules/order/order.module';
+import { PermissionModule } from './modules/permission/permission.module';
 import { ProductModule } from './modules/product/product.module';
 import { PropertyModule } from './modules/properties/properties.module';
+import { RoleModule } from './modules/role/role.module';
 import { TranslateModule } from './modules/translate/translate.module';
 import { UserModule } from './modules/user/user.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
@@ -16,7 +22,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, minioConfig]
+      load: [databaseConfig, minioConfig, jwtConfig]
     }),
     LanguageModule,
     TranslateModule,
@@ -26,7 +32,12 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     UserModule,
     ProductModule,
     WishlistModule,
-    CartModule
+    CartModule,
+    OrderModule,
+    AuthModule,
+    ModelModule,
+    PermissionModule,
+    RoleModule
   ],
 })
 export class AppModule {}

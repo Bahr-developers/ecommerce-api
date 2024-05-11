@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
     ConflictException,
-    Injectable
+    Injectable,
+    NotFoundException
   } from '@nestjs/common';
   import { PrismaService } from '../../prisma';
   import { TranslateService } from '../translate/translate.service';
@@ -9,6 +11,7 @@ import { CreateUserInterface, UpdateUserInterface } from './interfaces';
 import { MinioService } from '../../client';
 import { ProductService } from '../product/product.service';
 import * as bcrypt from 'bcrypt'
+import { isArray, isUUID } from 'class-validator';
   
   @Injectable()
   export class UserService {
@@ -24,11 +27,25 @@ import * as bcrypt from 'bcrypt'
         this.#_product = product;
       }
   
-    async createUser(payload: CreateUserInterface): Promise<void> {
+     async createUser(payload: CreateUserInterface, userId: string): Promise<void> {
+      await this.#_checkExistingUser(payload.phone);
+      await this.#_checkRoles(payload.roles);
         let image = ''
         let hashed_password = ''
-        if(payload.password.length){
-          const hashed_password = await bcrypt.hash(payload.password, 7)
+        let address = ''
+        let newUser:any = {}        
+
+        const foundedUser = await this.#_prisma.user.findFirst({where:{phone:payload.phone}})
+        if(foundedUser){
+          throw new BadRequestException("There is a user with this phone number")
+        }
+
+        if(payload.address){
+          address = payload.address
+        }
+
+        if(payload.password){
+          hashed_password = await bcrypt.hash(payload.password, 7)
         }
 
         if(payload.image){
@@ -38,34 +55,124 @@ import * as bcrypt from 'bcrypt'
           });
           image = file.fileName
         }
-      await this.#_prisma.user.create({
-          data: {
-              first_name: payload.first_name,
-              last_name: payload.last_name,
-              email: payload.email,
-              phone: payload.phone,
-              address: payload.address,
-              password: hashed_password,
-              image:image
-          },
-            })
+        if(payload.role){
+          newUser = await this.#_prisma.user.create({
+              data: {
+                  first_name: payload.first_name,
+                  last_name: payload.last_name,
+                  email: payload.email,
+                  phone: payload.phone,
+                  address: address,
+                  password: hashed_password,
+                  image:image,
+                  role_type: payload.role
+              }})
+        }else{
+          newUser = await this.#_prisma.user.create({
+              data: {
+                  first_name: payload.first_name,
+                  last_name: payload.last_name,
+                  email: payload.email,
+                  phone: payload.phone,
+                  address: address,
+                  password: hashed_password,
+                  image:image,
+              },
+                })
+        }    
+        for (const role of JSON.parse(payload.roles.toString())) {          
+          await this.#_prisma.userOnRole.create({
+            data: {
+              assignedBy: "59cba6e1-5f2a-4675-9481-0f2dfdf93033",
+              roleId: role,
+              userId: newUser.id,
+            },
+          });
+        }
     }
   
-    async getUserList(languageCode:string): Promise<User[]> {
-      const data = await this.#_prisma.user.findMany({include:{wishlist:true, products:true, cart:true}})
-      const result = data
-      const products = []
-      for(const item of result){
-        for(const product of item.products){
-          products.push(await this.#_product.getSingleProduct(languageCode, product.id))
-        }
-        item.products = products
-      }
-  
-      return data
+  async getUserList(): Promise<any[]> {
+    const response = [];
+    const data = await this.#_prisma.user.findMany();
+    for (const user of data) {
+      const roles = await this.#_prisma.userOnRole.findMany({
+        where: {
+          userId: user.id,
+        },
+        select: {
+          role: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      const devices = await this.#_prisma.userDevice.findMany({
+        where: {
+          userId: user.id,
+        },
+        select: {
+          id: true,
+          ip: true,
+          name: true,
+          model: true,
+          version: true,
+        },
+      });
+
+      response.push({
+        ...user,
+        roles,
+        devices,
+      });
+    }
+    return response;
   }
-  
-  async updateUser(payload: UpdateUserInterface): Promise<void> {
+
+  async getSingleUser(id: string): Promise<any> {
+    const user = await this.#_prisma.user.findFirst({ where: { id: id } });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const roles = await this.#_prisma.userOnRole.findMany({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        role: true,
+      },
+    });
+
+    const devices = await this.#_prisma.userDevice.findMany({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        ip: true,
+        name: true,
+        model: true,
+        version: true,
+      },
+    });
+
+    return {
+      ...user,
+      roles,
+      devices,
+    };
+  }
+
+  async getSingleUserByUserID(id: string): Promise<User> {
+    const user = await this.#_prisma.user.findFirst({ where: { id: id } });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    return user;
+  }
+
+  async updateUser(payload: UpdateUserInterface, userId: string): Promise<void> {
     await this.#_checkUser(payload.id);
     if(payload.first_name){
       await this.#_prisma.user.update({
@@ -82,6 +189,40 @@ import * as bcrypt from 'bcrypt'
           last_name: payload.last_name,
         },
         });
+      }
+      const userRoles = [];
+
+      if (!isArray(payload.roles) && payload?.roles) {
+        userRoles.push(payload.roles);
+      }
+  
+      if (isArray(payload?.roles)) {
+        userRoles.push(...payload.roles);
+      }
+  
+      const foundedUser = await this.#_prisma.user.findFirst({
+        where: { id: payload.id },
+      });
+  
+      if (!foundedUser) {
+        throw new NotFoundException('User not found');
+      }
+  
+
+      if (userRoles.length) {
+        await this.#_checkRoles(userRoles);
+        await this.#_prisma.userOnRole.deleteMany({
+          where: { userId: foundedUser.id },
+        });
+        for (const role of userRoles) {
+          await this.#_prisma.userOnRole.create({
+            data: {
+              assignedBy: userId,
+              roleId: role,
+              userId: foundedUser.id,
+            },
+          });
+        }
       }
     if(payload.phone){
       await this.#_prisma.user.update({
@@ -147,12 +288,18 @@ import * as bcrypt from 'bcrypt'
   
     async deleteUser(id: string): Promise<void> {
       await this.#_checkUser(id);
-      const foundedProduct = await this.#_prisma.user.findFirst({where:{id:id}});
-      if(foundedProduct.image.length){
+      const foundedUser = await this.#_prisma.user.findFirst({where:{id:id}});
+      if(foundedUser.image.length){
         await this.#_minio
-        .removeFile({ fileName: foundedProduct.image })
+        .removeFile({ fileName: foundedUser.image })
         .catch((undefined) => undefined);
       }
+      await this.#_prisma.userOnRole.deleteMany({
+        where: { userId: foundedUser.id },
+      });
+      await this.#_prisma.userDevice.deleteMany({
+        where: { userId: foundedUser.id },
+      });
       await this.#_prisma.user.delete({ where:{id: id} });
     }
   
@@ -169,6 +316,24 @@ import * as bcrypt from 'bcrypt'
   
       if (!translate) {
         throw new ConflictException(`Translate with ${id} is not exists`);
+      }
+    }
+
+    async #_checkExistingUser(phone: string): Promise<void> {
+      const user = await this.#_prisma.user.findFirst({ where: { phone } });
+      if (user) {
+        throw new ConflictException(`User ${phone} already exists`);
+      }
+    }
+  
+    async #_checkRoles(roles: string[]): Promise<void> {
+      for (const role of JSON.parse(roles.toString())) {        
+        const foundedRole = await this.#_prisma.role.findFirst({
+          where: { id: role },
+        });
+        if (!foundedRole) {
+          throw new NotFoundException(`Role ${role} not found`);
+        }
       }
     }
   }

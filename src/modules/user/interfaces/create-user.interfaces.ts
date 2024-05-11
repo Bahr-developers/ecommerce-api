@@ -3,8 +3,10 @@ export declare interface CreateUserInterface {
     last_name: string;
     email: string;
     password?: string
-    address: string;
+    address?: string;
     phone: string;
     image?: any;
+    role: "user" | 'super_admin' | 'admin'
+    roles: string[];
 }
   

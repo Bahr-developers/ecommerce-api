@@ -13,6 +13,7 @@ import {
   GetSingleTranslateResponse,
   UpdateTranslateRequest,
 } from './interfaces';
+import { log } from 'console';
 
 @Injectable()
 export class TranslateService {
@@ -39,10 +40,36 @@ export class TranslateService {
     });
   }
 
-  async getUnusedTranslateList(): Promise<Translate[]> {
+  async searchTranslate(payload): Promise<Translate[]> {
+
+    const data = await this.getTranslateList();
+    
+    
+    if (!payload.code.length || !data.length) {
+      return data;
+    }
+  
+    let result = [];
+    for (const translate of data) {      
+      
+      if (
+        translate.code
+          .toString()
+          .toLocaleLowerCase()
+          .includes(payload.code.toLocaleLowerCase())
+      ) {
+        
+        result.push(translate);
+      }
+    }
+    return result;
+  }
+
+
+  async getSingleTranslateByCode(code:string): Promise<Translate[]> {
     return await this.#_prisma.translate.findMany({
       where: {
-        status: 'inactive',
+        code: code
       },
       include: {
         definition: {
@@ -67,7 +94,7 @@ export class TranslateService {
     }
 
     const translate = await this.#_prisma.translate.create({
-      data: { code: payload.code, type: payload.type, status: 'inactive' },
+      data: { code: payload.code, type: payload.type },
     });
 
     for (const item of Object.entries(payload.definition)) {
@@ -127,17 +154,6 @@ export class TranslateService {
       where: { id: payload.id },
     });
 
-    if (payload?.status) {
-      if (payload.status == 'active' && foundedTranslate.status == 'active') {
-        throw new ConflictException('Translate is already in use');
-      }
-
-      await this.#_prisma.translate.update({
-        where: { id: payload.id },
-        data: { status: payload.status },
-      });
-    }
-
     if(payload?.definition){
       await this.#_prisma.definition.deleteMany({where: {translateId: foundedTranslate.id}})
 
@@ -159,7 +175,6 @@ export class TranslateService {
 
   async deleteTranslate(id: string) {
     await this.#_checkUUID(id);
-
     await this.#_prisma.translate.delete({
       where: { id },
       include: {
