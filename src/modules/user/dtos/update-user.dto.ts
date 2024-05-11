@@ -1,7 +1,8 @@
-import { IsString, IsArray, IsPhoneNumber, IsNotEmpty, IsEmail, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsArray, IsPhoneNumber, IsNotEmpty, IsEmail, IsOptional, IsEnum, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UpdateUserInterface } from '../interfaces';
-import { $Enums, Role } from '@prisma/client';
+import { $Enums, Role, Role_Type } from '@prisma/client';
+import { Transform } from 'class-transformer';
 
 export class UpdateUserDto implements Omit<UpdateUserInterface, 'id'> {
   @ApiProperty({
@@ -62,12 +63,23 @@ export class UpdateUserDto implements Omit<UpdateUserInterface, 'id'> {
   image: any;
 
   @ApiProperty({
-    examples: ['super_admin', 'user'],
-    enum: Role,
+    examples: ['super_admin', 'user', 'admin'],
+    enum: Role_Type,
     required: true
   })
   @IsOptional()
-  @IsEnum(Role)
+  @IsEnum(Role_Type)
   @IsString()
-  role: $Enums.Role;
+  role: $Enums.Role_Type;
+
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    else return value
+  })
+  @ApiProperty()
+  @IsOptional()
+  @IsUUID(4, {
+    each: true,
+  })
+  roles?: string[];
 }

@@ -33,15 +33,10 @@ import {
       return await this.#_service.getTranslateList();
     }
   
-    @Get('/unused')
-    async getUnusedTranslateList(): Promise<Translate[]> {
-      return await this.#_service.getUnusedTranslateList();
-    }
-  
     @Get('find/:id')
     async retrieveSingleTranslate(
-      @Headers('accept-language') languageCode: string,
       @Param('id') translateId: string,
+      @Headers('accept-language') languageCode: string,
     ): Promise<GetSingleTranslateResponse> {
       return await this.#_service.getSingleTranslate({
         languageCode,

@@ -1,7 +1,7 @@
-import { IsString, IsArray, IsPhoneNumber, IsNotEmpty, IsEmail, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsArray, IsPhoneNumber, IsNotEmpty, IsEmail, IsOptional, IsEnum, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CreateUserInterface } from '../interfaces';
-import { $Enums, Role } from '@prisma/client';
+import { $Enums, Role, Role_Type } from '@prisma/client';
 
 export class CreateUserDto implements CreateUserInterface {
   @ApiProperty({
@@ -58,16 +58,23 @@ export class CreateUserDto implements CreateUserInterface {
     maxItems: 8,
     format: 'binary',
     type: 'string',
+    required: false
   })
   @IsOptional()
   image?: any;
 
   @ApiProperty({
-    examples: ['super_admin', 'user'],
-    enum: Role,
+    examples: ['super_admin', 'user', 'admin'],
+    enum: Role_Type,
     required: true
   })
-  @IsEnum(Role)
+  @IsEnum(Role_Type)
   @IsString()
-  role: $Enums.Role;
+  role: $Enums.Role_Type;
+
+  @ApiProperty({
+    example: '["660d5290e49538271705501e"]',
+    required: true,
+  })
+  roles: string[];
 }

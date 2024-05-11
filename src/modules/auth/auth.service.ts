@@ -216,14 +216,14 @@ import {
       });
   
       const accessToken = this.#_jwt.sign(
-        { id: foundedUser.id, role:foundedUser.role },
+        { id: foundedUser.id, role:foundedUser.role_type },
         {
           secret: this.#_config.getOrThrow<string>('jwt.accessKey'),
           expiresIn: process.env.ACCESS_TOKEN_EXPIRE_TIME,
         },
       );
       const refreshToken = this.#_jwt.sign(
-        { id: foundedUser.id, role: foundedUser.role },
+        { id: foundedUser.id, role: foundedUser.role_type },
         {
           secret: this.#_config.getOrThrow<string>('jwt.refreshKey'),
           expiresIn: process.env.REFRESH_TOKEN_EXPIRE_TIME,

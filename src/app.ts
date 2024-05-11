@@ -8,9 +8,12 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoryModule } from './modules/category/category.module';
 import { LanguageModule } from './modules/language/language.module';
+import { ModelModule } from './modules/model/model.module';
 import { OrderModule } from './modules/order/order.module';
+import { PermissionModule } from './modules/permission/permission.module';
 import { ProductModule } from './modules/product/product.module';
 import { PropertyModule } from './modules/properties/properties.module';
+import { RoleModule } from './modules/role/role.module';
 import { TranslateModule } from './modules/translate/translate.module';
 import { UserModule } from './modules/user/user.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
@@ -31,7 +34,10 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     WishlistModule,
     CartModule,
     OrderModule,
-    AuthModule
+    AuthModule,
+    ModelModule,
+    PermissionModule,
+    RoleModule
   ],
 })
 export class AppModule {}

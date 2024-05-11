@@ -17,7 +17,7 @@ export class CreateProductDto implements CreateProductInterface {
   description: object;
 
   @ApiProperty({
-    example: '[660d5290e49538271705501e, value: {"uz":"Salom", "en":"Hello"}',
+    example: '[{"property_id":"660d5290e49538271705501e", "value": {"uz":"Salom", "en":"Hello"}}]',
     required: true,
   })
   properties: CreatePropertiesOnProductInterface[];
@@ -65,6 +65,7 @@ export class CreateProductDto implements CreateProductInterface {
   @ApiProperty({
     format: 'binary',
     type: 'string',
+    required:false
   })
   @IsOptional()
   video?: any;

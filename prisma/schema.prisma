@@ -12,8 +12,9 @@ enum Status {
   inactive @map("inactive")
 }
 
-enum Role {
+enum Role_Type {
   super_admin   @map("super_admin")
+  admin   @map("admin")
   user @map("user")
 }
 
@@ -28,6 +29,7 @@ model Language {
   id         String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
   code       String       @map("code") @db.VarChar(2)
   title      String       @map("title") @db.VarChar(64)
+  image_url   String      @map("image_url") @db.VarChar()
   definition Definition[]
 
   @@id([id])
@@ -39,7 +41,7 @@ model Translate {
   id         String        @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
   code       String        @map("code") @db.VarChar()
   type       TranslateType @map("type")
-  status     Status        @default(inactive) @map("status")
+  createdAt   DateTime     @default(now()) @map("created_at")
   definition Definition[]
 
   @@id([id])
@@ -127,9 +129,10 @@ model User {
   address      String?       @map("addres") @db.VarChar()
   image        String?      @map("image") @db.VarChar()
   createdAt   DateTime      @default(now()) @map("created_at")
-  role      Role            @default(user) @map("status")
+  role_type      Role_Type            @default(user) @map("role_type")
 
   products   Product[]
+  users       UserOnRole[]
   sms   Sms[]
   userDevice UserDevice[]
   shipment   Shipment[]
@@ -187,6 +190,7 @@ model Order {
   customer_id   String         @map("customer_id") @db.Uuid
   shipment_id   String         @map("shipment_id") @db.Uuid
   status      Status        @default(active) @map("status")
+  
 
   user User @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -236,4 +240,45 @@ model Sms {
 
   @@id([id])
   @@map("sms")
+}
+model Model {
+  id        String             @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  name      String             @map("name") @db.VarChar()
+
+  permission   Permission[]
+
+  @@id([id])
+  @@map("model")
+}
+model Permission {
+  id        String             @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  name      String             @map("name") @db.VarChar()
+  code      String             @map("code") @db.VarChar()
+  model_id  String             @map("model_id") @db.Uuid()
+
+  model Model @relation(fields: [model_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id])
+  @@map("permission")
+}
+model Role {
+  id          String       @default(dbgenerated("GEN_RANDOM_UUID()")) @map("id") @db.Uuid
+  name        String       @map("name") @db.VarChar()
+  permissions String[]     @map("permissions") @db.Uuid
+  role_type      Role_Type @map("role_type")
+  users       UserOnRole[]
+
+  @@id([id])
+  @@map("role")
+}
+
+model UserOnRole {
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id])
+  roleId     String   @map("role_id") @db.Uuid
+  role       Role     @relation(fields: [roleId], references: [id])
+  assignedAt DateTime @default(now()) @map("assigned_at")
+  assignedBy String   @map("assigned_by") @db.Uuid
+
+  @@id([userId, roleId])
 }

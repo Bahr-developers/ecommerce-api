@@ -40,26 +40,6 @@ export class TranslateService {
     });
   }
 
-  async getUnusedTranslateList(): Promise<Translate[]> {
-    return await this.#_prisma.translate.findMany({
-      where: {
-        status: 'inactive',
-      },
-      include: {
-        definition: {
-          select: {
-            value: true,
-            language: {
-              select: {
-                code: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
-
   async searchTranslate(payload): Promise<Translate[]> {
 
     const data = await this.getTranslateList();
@@ -114,7 +94,7 @@ export class TranslateService {
     }
 
     const translate = await this.#_prisma.translate.create({
-      data: { code: payload.code, type: payload.type, status: 'inactive' },
+      data: { code: payload.code, type: payload.type },
     });
 
     for (const item of Object.entries(payload.definition)) {
@@ -173,17 +153,6 @@ export class TranslateService {
     const foundedTranslate = await this.#_prisma.translate.findFirst({
       where: { id: payload.id },
     });
-
-    if (payload?.status) {
-      if (payload.status == 'active' && foundedTranslate.status == 'active') {
-        throw new ConflictException('Translate is already in use');
-      }
-
-      await this.#_prisma.translate.update({
-        where: { id: payload.id },
-        data: { status: payload.status },
-      });
-    }
 
     if(payload?.definition){
       await this.#_prisma.definition.deleteMany({where: {translateId: foundedTranslate.id}})

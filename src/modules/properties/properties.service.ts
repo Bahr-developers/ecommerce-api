@@ -24,12 +24,6 @@ export class PropertyService {
             name: payload.name
         },
           });
-
-    await this.#_prisma.translate.update({
-        where:{id:payload.name},
-        data:{status:"active"}
-    }
-    );
   }
 
   async getSingleProperty(languageCode:string, id:string): Promise<Properties[]> {
@@ -97,26 +91,17 @@ async searchProperty(payload: SearchPropertyInterface): Promise<Properties[]> {
 
   async updateProperties(payload: UpdatePropertiesInterface): Promise<void> {
     await this.#_checkProperty(payload.id);    
-    const propety = await this.#_prisma.properties.findFirst({where:{id:payload.id}})
     if(payload.name){
       await this.checkTranslate(payload.name);
-      await this.#_prisma.translate.delete({where:{id:propety.name}})
       await this.#_prisma.properties.update({
         where:{id:payload.id}, 
         data:{name:payload.name
         }})
-        await this.#_prisma.translate.update({
-          where:{id: payload.name},
-          data:{status: 'active'}
-        }
-        );
       }
     }
     
     async deleteProperty(id: string): Promise<void> {
     await this.#_checkProperty(id);
-    const updateProperty = await this.#_prisma.properties.findFirst({where:{id:id}});
-    await this.#_prisma.translate.delete({where:{id:updateProperty.name}})
     await this.#_prisma.properties.delete({ where:{id: id} });
     }
 

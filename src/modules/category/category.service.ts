@@ -51,12 +51,6 @@ export class CategoryService {
         image_url:image,
       }});
     }
-
-    await this.#_prisma.translate.update({
-        where:{id:payload.name},
-        data:{status:"active"}
-    }
-    );
   }
 
   async getSingleCategory(languageCode:string, id:string): Promise<Category[]> {
@@ -166,11 +160,6 @@ export class CategoryService {
         where:{id:payload.id}, 
         data:{name:payload.name
       }})
-      await this.#_prisma.translate.update({
-        where:{id: payload.name},
-        data:{status: 'active'}
-      }
-      );
     }
     if(payload.image){
       const deleteImageFile = await this.#_prisma.category.findFirst({where:{id:payload.id}});
@@ -192,7 +181,6 @@ export class CategoryService {
     if(deleteImageFile.image_url){
       await this.#_minio.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
     }
-    await this.#_prisma.translate.delete({where:{id: deleteImageFile.name}});
     await this.#_prisma.category.delete({ where:{id: id} });
   }
 

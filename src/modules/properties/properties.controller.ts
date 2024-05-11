@@ -62,6 +62,7 @@ import { PropertyService } from './properties.service';
       await this.#_service.createProperty({...payload});
     }
 
+    @Patch('edit/:id')
     async updateProperties(
       @Param('id') propertyId: string,
       @Body() payload: UpdatePropertiesDto,

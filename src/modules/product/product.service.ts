@@ -126,33 +126,8 @@ import { trace } from 'console';
           value:translate_value
         }
       })
-      await this.#_prisma.translate.update(
-        { where: {
-            id: translate_value,
-          },
-          data:{
-            status: 'active',
-          },}
-        );
-    }        
-      await this.#_prisma.translate.update(
-      { where: {
-          id: translate_title,
-        },
-        data:{
-          status: 'active',
-        },}
-      );
-  
-      await this.#_prisma.translate.update(
-        { where: {
-            id: translate_description,
-          },
-          data:{
-            status: 'active',
-          },}
-        );
     }
+  }
   
     async searchProduct(payload: SearchProductInterface): Promise<Product[]> {  
       const data = await this.getProductList(payload.languageCode);
@@ -508,20 +483,7 @@ import { trace } from 'console';
           .removeFile({ fileName: photo })
           .catch((undefined) => undefined);
       }
-  
-      await this.#_prisma.translate.update({
-        where:{ id: deleteImageFile.title },
-        data:{
-          status: 'inactive',
-        }
-      });
-  
-      await this.#_prisma.translate.update({
-        where:{ id: deleteImageFile.description },
-        data:{
-          status: 'inactive',
-        }
-      });  
+ 
       await this.#_prisma.product.delete({where:{id:id}});
     }
   
