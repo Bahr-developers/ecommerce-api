@@ -15,6 +15,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
   import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
   import { Category, User } from '@prisma/client';
 import { FileType } from '../category/interfaces';
+import { PERMISSIONS } from '../constants';
+import { CheckAuth, Permision } from '../decorators';
 import { CreateUserDto, UpdateUserDto } from './dtos';
 import { UserService } from './user.service';
   
@@ -31,22 +33,23 @@ import { UserService } from './user.service';
       this.#_service = service;
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.user.get_all_users)
     @Get('find/all')
     async getUserList(
     ): Promise<User[]> {
       return await this.#_service.getUserList();
     }
-
-    @Get('/single')
-    async getSingleUser(@Req() req: any): Promise<any> {
-      return await this.#_service.getSingleUser(req.userId);
-    }
   
-    @Get('/single/user/by/:userId')
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.user.get_one_user)
+    @Get('/user/by/:userId')
     async getSingleUserByUserID(@Param("userId") userId: string): Promise<User> {
       return await this.#_service.getSingleUser(userId);
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.user.create_user)
     @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor('image'))
     @Post('add')
@@ -58,6 +61,8 @@ import { UserService } from './user.service';
       await this.#_service.createUser({...payload, image}, req.userId);
     }
 
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.user.edit_user)
     @ApiConsumes('multipart/form-data')
     @Patch('edit/:id')
     @UseInterceptors(FileInterceptor('image'))
@@ -74,6 +79,8 @@ import { UserService } from './user.service';
       }, req.userId);
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.user.delete_user)
     @Delete('delete/:id')
     async deleteUser(@Param('id') id: string): Promise<void> {
       await this.#_service.deleteUser(id);

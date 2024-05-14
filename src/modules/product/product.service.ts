@@ -12,7 +12,7 @@ import { trace } from 'console';
   import { LanguageService } from '../language/language.service';
   import { TranslateService } from '../translate/translate.service';
   import { DeleteProductImageDto } from './dtos/delete-one-product-image.dto';
-  import { AddOneProductVideoInterface, CreateProductInterface, DeleteProductVideoInterface, UpdateProductRequest } from './interfaces';
+  import { AddOneProductVideoInterface, CreateProductInterface, DeleteProductVideoInterface, GetProductList, getProductResponse, UpdateProductRequest } from './interfaces';
   import { AddOneProductImageInterface } from './interfaces/add-one-product-image.interface';
   import { SearchProductInterface } from './interfaces/search-product.interface';
   
@@ -130,7 +130,7 @@ import { trace } from 'console';
   }
   
     async searchProduct(payload: SearchProductInterface): Promise<Product[]> {  
-      const data = await this.getProductList(payload.languageCode);
+      const data = await this.getProductList({languageCode:payload.languageCode});
       
       if (!payload.title.length || !data.length) {
         return data;
@@ -153,68 +153,21 @@ import { trace } from 'console';
       return result;
     }
   
-    async getSingleProduct(languageCode: string, id:string): Promise<Product> {
+    async getSingleProduct(languageCode: string, id:string): Promise<Product[]> {
       const data = await this.#_prisma.product.findMany({where:{id:id}, include:{properties_on_product:
         {
           include: {
             properties: true
           }
     }}})
-  
-      let result:any = {};
-      let propertiesOnProduct = []
-      for (let x of data) {
-        const title_request = {
-          translateId: x.title.toString(),
-          languageCode: languageCode,
-        };
-  
-        const desription_request = {
-          translateId: x.description.toString(),
-          languageCode: languageCode,
-        };
-  
-        const translated_title = await this.#_translate.getSingleTranslate(
-          title_request,
-        );
-        const translated_description = await this.#_translate.getSingleTranslate(
-          desription_request,
-        );
-        for(const value of x.properties_on_product){
-          const property_on_product: any = {}
-          const value_request = {
-            translateId: value.value.toString(),
-            languageCode: languageCode,
-          };
-    
-          const translated_value = await this.#_translate.getSingleTranslate(
-            value_request,
-          );
-          property_on_product.id = value.id
-          property_on_product.key = (await this.#_translate.getSingleTranslate({translateId:value.properties.name, languageCode:languageCode})).value
-          property_on_product.value = translated_value.value
-
-          propertiesOnProduct.push(property_on_product)
-        }
-          result.id = x.id,
-          result.title = translated_title.value,
-          result.description =  translated_description.value,
-          result.image_urls =  x.image_urls,
-          result.price = x.price,
-          result.count = x.count,
-          result.category_id = x.category_id,
-          result.createdBy = x.createdBy,
-          result.video = x.video_url,
-          result.status = x.status,
-          result.properties = propertiesOnProduct
-      }
-      return result;
+    return await this.#_getSingleProductForAdmin(data, languageCode)
     }
-    async getProductList(languageCode: string, page?: number, limit?: number): Promise<Product[]> {
+
+    async getProductList(payload: GetProductList): Promise<Product[]> {
       const defaultLimit = 20;
       const defaultPage = 1;
     
-      const skip = ((page || defaultPage) - 1) * (limit || defaultLimit);
+      const skip = ((payload.page || defaultPage) - 1) * (payload.limit || defaultLimit);
     
       const data = await this.#_prisma.product.findMany({
         include: {
@@ -225,57 +178,10 @@ import { trace } from 'console';
           }
         },
         skip,
-        take: Number(limit) || defaultLimit,
+        take: Number(payload.limit) || defaultLimit,
       });
-    
-      const result: Product[] = [];
-      for (const x of data) {
-        const title_request = {
-          translateId: x.title.toString(),
-          languageCode,
-        };
-    
-        const desription_request = {
-          translateId: x.description.toString(),
-          languageCode,
-        };
-    
-        const translated_title = await this.#_translate.getSingleTranslate(title_request);
-        const translated_description = await this.#_translate.getSingleTranslate(desription_request);
-    
-        const propertiesOnProduct = [];
-        for (const value of x.properties_on_product) {
-          const value_request = {
-            translateId: value.value.toString(),
-            languageCode,
-          };
-    
-          const translated_value = await this.#_translate.getSingleTranslate(value_request);
-    
-          const property_on_product: any = {};
-          property_on_product.id = value.id;
-          property_on_product.key = (await this.#_translate.getSingleTranslate({ translateId: value.properties.name, languageCode })).value;
-          property_on_product.value = translated_value.value;
-    
-          propertiesOnProduct.push(property_on_product);
-        }
-        const product:any = {}
-        product.id = x.id,
-        product.title = translated_title.value,
-        product.description = translated_description.value,
-        product.image_urls = x.image_urls,
-        product.price = x.price,
-        product.count = x.count,
-        product.category_id = x.category_id,
-        product.createdBy = x.createdBy,
-        product.video_url = x.video_url,
-        product.status = x.status,
-        product.properties = propertiesOnProduct,
-    
-        result.push(product);
-      }
-    
-      return result;
+      
+      return await this.#_getSingleProductForAdmin(data, payload.languageCode)
     }
     async updateProduct(payload: UpdateProductRequest): Promise<void> {
       await this.#_checkProduct(payload.id);
@@ -561,5 +467,54 @@ import { trace } from 'console';
         throw new ConflictException(`${code} is not available`);
       }
     }
-  }
-  
+
+    async #_getSingleProductForAdmin(data: any[], languageCode: string): Promise<Product[]> {
+      const result: Product[] = [];
+      for (const x of data) {
+        const title_request = {
+          translateId: x.title.toString(),
+          languageCode: languageCode,
+        };
+    
+        const desription_request = {
+          translateId: x.description.toString(),
+          languageCode: languageCode,
+        };
+    
+        const translated_title = await this.#_translate.getSingleTranslate(title_request);
+        const translated_description = await this.#_translate.getSingleTranslate(desription_request);
+    
+        const propertiesOnProduct = [];
+        for (const value of x.properties_on_product) {
+          const value_request = {
+            translateId: value.value.toString(),
+            languageCode: languageCode,
+          };
+    
+          const translated_value = await this.#_translate.getSingleTranslate(value_request);
+    
+          const property_on_product: any = {};
+          property_on_product.id = value.id;
+          property_on_product.key = (await this.#_translate.getSingleTranslate({ translateId: value.properties.name, languageCode: languageCode })).value;
+          property_on_product.value = translated_value.value;
+    
+          propertiesOnProduct.push(property_on_product);
+        }
+        const product:any = {}
+        product.id = x.id,
+        product.title = translated_title.value,
+        product.description = translated_description.value,
+        product.image_urls = x.image_urls,
+        product.price = x.price,
+        product.count = x.count,
+        product.category_id = x.category_id,
+        product.createdBy = x.createdBy,
+        product.video_url = x.video_url,
+        product.status = x.status,
+        product.properties = propertiesOnProduct,
+    
+        result.push(product);
+      }
+      return result;
+}
+}
