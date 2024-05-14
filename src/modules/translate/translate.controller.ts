@@ -14,6 +14,8 @@ import {
   import { CreateTranslateDto, UpdateTranslateDto } from './dtos';
   import { Translate } from '@prisma/client';
   import { GetSingleTranslateResponse } from './interfaces';
+import { CheckAuth, Permision } from '../decorators';
+import { PERMISSIONS } from '../constants';
   
   @ApiBearerAuth("JWT")
   @ApiTags('Translate')
@@ -28,11 +30,15 @@ import {
       this.#_service = service;
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.translate.get_all_translates)
     @Get('find/all')
     async getTranslateList(): Promise<Translate[]> {
       return await this.#_service.getTranslateList();
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.translate.get_translate)
     @Get('find/:id')
     async retrieveSingleTranslate(
       @Param('id') translateId: string,
@@ -44,6 +50,8 @@ import {
       });
     }
 
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.translate.search_translate_by_code)
     @Get('/search')
     async searchTranslate(
       @Query('code') code: string,
@@ -53,6 +61,8 @@ import {
       });
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.translate.get_single_translate_by_code)
     @Get('find/code/:code')
     async getSingleTranslateByCode(
       @Param('code') code: string,
@@ -60,11 +70,15 @@ import {
       return await this.#_service.getSingleTranslateByCode(code);
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.translate.create_translate)
     @Post('add')
     async createTranslate(@Body() payload: CreateTranslateDto): Promise<string> {
       return await this.#_service.createTranslate(payload);
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.translate.edit_translate)
     @Patch('edit/:id')
     async updateTranslate(
       @Param('id') translateId: string,
@@ -73,6 +87,8 @@ import {
       await this.#_service.updateTranslate({ ...payload, id: translateId });
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.translate.delete_translate)
     @Delete('delete/:id')
     async deleteTranslate(@Param('id') translateId: string): Promise<void> {
       await this.#_service.deleteTranslate(translateId);

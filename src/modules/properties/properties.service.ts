@@ -29,40 +29,15 @@ export class PropertyService {
   async getSingleProperty(languageCode:string, id:string): Promise<Properties[]> {
     await this.#_checkProperty(id)
     const data = await this.#_prisma.properties.findMany()
-    let result = [];
 
-    for (let x of data) {
-      const property: any = {};
-
-      property.id = x.id;
-      const property_name = await this.#_service.getSingleTranslate({
-        translateId: x.name.toString(),
-        languageCode: languageCode,
-      })
-      property.name = property_name      
-
-      result.push(property)
-    }
-    return result
+    const property = await this.#_getProperty(data, languageCode)
+    return property[0]
   }
 
   async getPropertyList(languageCode: string): Promise<Properties[]> {
     const data = await this.#_prisma.properties.findMany()
 
-    let result = [];
-
-    for (let x of data) {
-      const property: any = {};
-
-      property.id = x.id;
-      const property_name = await this.#_service.getSingleTranslate({
-        translateId: x.name.toString(),
-        languageCode: languageCode,
-    })      
-    property.name = property_name.value;  
-      result.push(property)
-    }
-    return result
+    return await this.#_getProperty(data, languageCode)
 }
 
 async searchProperty(payload: SearchPropertyInterface): Promise<Properties[]> {
@@ -119,5 +94,22 @@ async searchProperty(payload: SearchPropertyInterface): Promise<Properties[]> {
     if (!translate) {
       throw new ConflictException(`Translate with ${id} is not exists`);
     }
+  }
+
+  async #_getProperty(data, languageCode){
+    let result = [];
+
+    for (let x of data) {
+      const property: any = {};
+
+      property.id = x.id;
+      const property_name = await this.#_service.getSingleTranslate({
+        translateId: x.name.toString(),
+        languageCode: languageCode,
+    })      
+    property.name = property_name.value;  
+      result.push(property)
+    }
+    return result
   }
 }

@@ -24,6 +24,7 @@ import {
   import { isJWT } from 'class-validator';
   import { UAParser } from 'ua-parser-js';
   import * as bcrypt from 'bcrypt'
+import { JWT_ACCESS_EXPIRE_TIME, JWT_REFRESH_EXPIRE_TIME, SMS_EXPIRE_TIME } from '../constants';
   
   @Injectable()
   export class AuthService {
@@ -85,7 +86,7 @@ import {
         }        
 
         return {
-          expireTime: parseInt(process.env.SMS_EXPIRE_TIME) | 120,
+          expireTime: SMS_EXPIRE_TIME,
           smsId: newSms.id,
           smsCode,
         };
@@ -131,17 +132,17 @@ import {
       });
   
       const accessToken = this.#_jwt.sign(
-        { id: foundedSms.id },
+        { id: user.id, role_type: user.role_type },
         {
           secret: this.#_config.getOrThrow<string>('jwt.accessKey'),
-          expiresIn: process.env.ACCESS_TOKEN_EXPIRE_TIME,
+          expiresIn: JWT_ACCESS_EXPIRE_TIME,
         },
       );
       const refreshToken = this.#_jwt.sign(
         { id: foundedSms.id },
         {
           secret: this.#_config.getOrThrow<string>('jwt.refreshKey'),
-          expiresIn: process.env.REFRESH_TOKEN_EXPIRE_TIME,
+          expiresIn: JWT_REFRESH_EXPIRE_TIME,
         },
       );
   
@@ -219,14 +220,14 @@ import {
         { id: foundedUser.id, role:foundedUser.role_type },
         {
           secret: this.#_config.getOrThrow<string>('jwt.accessKey'),
-          expiresIn: process.env.ACCESS_TOKEN_EXPIRE_TIME,
+          expiresIn: JWT_ACCESS_EXPIRE_TIME,
         },
       );
       const refreshToken = this.#_jwt.sign(
         { id: foundedUser.id, role: foundedUser.role_type },
         {
           secret: this.#_config.getOrThrow<string>('jwt.refreshKey'),
-          expiresIn: process.env.REFRESH_TOKEN_EXPIRE_TIME,
+          expiresIn: JWT_REFRESH_EXPIRE_TIME,
         },
       );
   

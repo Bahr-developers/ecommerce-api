@@ -38,7 +38,7 @@ export class CategoryService {
     }
 
     if (payload.category_id) {
-        await this.#_prisma.category.create({
+      const newCategoriy= await this.#_prisma.category.create({
             data: {
               name: payload.name,
               image_url: image,
@@ -53,97 +53,19 @@ export class CategoryService {
     }
   }
 
-  async getSingleCategory(languageCode:string, id:string): Promise<Category[]> {
+  async getSingleCategory(languageCode:string, id:string): Promise<Category> {
     await this.#_checkCategory(id)
     const data = await this.#_prisma.category.findMany({where:{id:id}, include:{subcategories:{include:{product:true}}}})
-    let result = [];
 
-    for (let x of data) {
-      let subcategories = [];
-      const category: any = {};
+    const category =  await this.#_getCategoryListForAdmin(data, languageCode)
 
-      category.id = x.id;
-      const category_name = await this.#_service.getSingleTranslate({
-        translateId: x.name.toString(),
-        languageCode: languageCode,
-    })      
-    category.name = category_name.value;  
-    category.image_url = x.image_url;
-    const addTo = category.name.split(' ')
-    let to = ''
-    for(let item of addTo){
-      to+=item
-      to+='-'
-    }
-    to+=category.id
-    category.to = to
-    for(const item of x.subcategories){
-        let subcategory:any ={}
-
-        subcategory.id = item.id;
-        const subcategory_name = await this.#_service.getSingleTranslate({
-            translateId: item.name.toString(),
-            languageCode: languageCode,
-        }) 
-        subcategory.name = subcategory_name.value;      
-        subcategory.image_url = item.image_url;
-        const addTo = subcategory.name.split(' ')
-        let to = ''
-        for(let item of addTo){
-          to+=item
-          to+='-'
-        }
-        to+=subcategory.id
-        subcategory.to = to
-        let products = []
-        for(const product of item.product){
-          products.push(await this.#_product.getSingleProduct(languageCode, product.id))
-        }
-        subcategory.products = products
-        category.subcategories = subcategory
-    }    
-      result.push(category)
-    }
-    return result
+    return category[0]
   }
 
   async getCategoryList(languageCode: string): Promise<Category[]> {
     const data = await this.#_prisma.category.findMany({include:{subcategories:{include:{product:true}}}})
 
-    let result = [];
-
-    for (let x of data) {
-      let subcategories = [];
-      const category: any = {};
-
-      category.id = x.id;
-      const category_name = await this.#_service.getSingleTranslate({
-        translateId: x.name.toString(),
-        languageCode: languageCode,
-    })      
-    category.name = category_name.value;  
-    category.image_url = x.image_url;
-    for(const item of x.subcategories){
-        let subcategory:any ={}
-
-        subcategory.id = item.id;
-        const subcategory_name = await this.#_service.getSingleTranslate({
-            translateId: item.name.toString(),
-            languageCode: languageCode,
-        }) 
-        let products = []
-        for(const product of item.product){
-          products.push(await this.#_product.getSingleProduct(languageCode, product.id))
-        }
-        subcategory.name = subcategory_name.value;      
-        subcategory.image_url = item.image_url;
-        subcategory.products = products
-
-        category.subcategories = subcategory
-    }    
-      result.push(category)
-    }
-    return result
+    return await this.#_getCategoryListForAdmin(data, languageCode)
 }
 
   async updateCategory(payload: UpdateCategoryInterface): Promise<void> {
@@ -231,5 +153,42 @@ export class CategoryService {
     if (!translate) {
       throw new ConflictException(`Translate with ${id} is not exists`);
     }
+  }
+
+  async #_getCategoryListForAdmin(data, languageCode): Promise<Category[]>{
+    let result = [];
+
+    for (let x of data) {
+      let subcategories = [];
+      const category: any = {};
+
+      category.id = x.id;
+      const category_name = await this.#_service.getSingleTranslate({
+        translateId: x.name.toString(),
+        languageCode: languageCode,
+    })      
+    category.name = category_name.value;  
+    category.image_url = x.image_url;
+    for(const item of x.subcategories){
+        let subcategory:any ={}
+
+        subcategory.id = item.id;
+        const subcategory_name = await this.#_service.getSingleTranslate({
+            translateId: item.name.toString(),
+            languageCode: languageCode,
+        }) 
+        let products = []
+        for(const product of item.product){
+          products.push(await this.#_product.getSingleProduct(languageCode, product.id))
+        }
+        subcategory.name = subcategory_name.value;      
+        subcategory.image_url = item.image_url;
+        subcategory.products = products
+
+        category.subcategories = subcategory
+    }    
+      result.push(category)
+    }
+    return result
   }
 }

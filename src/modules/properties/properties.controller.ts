@@ -13,6 +13,8 @@ import {
   } from '@nestjs/common';
   import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
   import { Properties } from '@prisma/client';
+import { PERMISSIONS } from '../constants';
+import { CheckAuth, Permision } from '../decorators';
 import { CreatePropertiesDto, UpdatePropertiesDto } from './dtos';
 import { PropertyService } from './properties.service';
   
@@ -29,6 +31,8 @@ import { PropertyService } from './properties.service';
       this.#_service = service;
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.property.get_all_propertys)
     @Get('find/all')
     async getPropertyList(
     @Headers('accept-language') languageCode: string,
@@ -36,6 +40,8 @@ import { PropertyService } from './properties.service';
       return await this.#_service.getPropertyList(languageCode);
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.property.get_property_by_id)
     @Get('find/:id')
     async getSingleProperty(
     @Param('id') categoryId:string,
@@ -44,6 +50,8 @@ import { PropertyService } from './properties.service';
       return await this.#_service.getSingleProperty(languageCode, categoryId);
     }
 
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.property.search_property)
     @Get('/search')
     async searchProperty(
       @Headers('accept-language') languageCode: string,
@@ -55,6 +63,8 @@ import { PropertyService } from './properties.service';
       });
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.property.create_property)
     @Post('add')
     async createProperty(
         @Body() payload: CreatePropertiesDto,
@@ -62,6 +72,8 @@ import { PropertyService } from './properties.service';
       await this.#_service.createProperty({...payload});
     }
 
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.property.edit_property)
     @Patch('edit/:id')
     async updateProperties(
       @Param('id') propertyId: string,
@@ -73,6 +85,8 @@ import { PropertyService } from './properties.service';
     });
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.property.delete_property)
     @Delete('delete/:id')
     async deleteProperty(@Param('id') id: string): Promise<void> {
       await this.#_service.deleteProperty(id);

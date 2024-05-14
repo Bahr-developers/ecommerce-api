@@ -10,6 +10,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
   import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
   import { Category, Wishlist } from '@prisma/client';
+import { PERMISSIONS } from '../constants';
+import { CheckAuth, Permision } from '../decorators';
 import { CreateWishlistDto } from './dtos';
 import { WishlistService } from './wishlist.service';
   
@@ -26,12 +28,16 @@ import { WishlistService } from './wishlist.service';
       this.#_service = service;
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.wishlist.get_all_wishlists)
     @Get('find/all')
     async getWishlist(
     ): Promise<Wishlist[]> {
       return await this.#_service.getWishlist();
     }
   
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.wishlist.create_wishlist)
     @Post('add')
     async createWishlist(
         @Body() payload: CreateWishlistDto,
@@ -39,7 +45,8 @@ import { WishlistService } from './wishlist.service';
       await this.#_service.createWishlist({...payload});
     }
 
-  
+    @CheckAuth(false)
+    @Permision(PERMISSIONS.wishlist.delete_wishlist)  
     @Delete('delete/:id')
     async deleteCategory(@Param('id') id: string): Promise<void> {
       await this.#_service.deleteCategory(id);
