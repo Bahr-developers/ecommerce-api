@@ -173,7 +173,7 @@ import { Order } from '@prisma/client';
       const data = await this.#_prisma.order.findMany({
         include: { orderitem: true },
         skip,
-        take: limit || defaultLimit,
+        take: Number(limit) || defaultLimit,
       });
     
       return data;
@@ -231,8 +231,8 @@ import { Order } from '@prisma/client';
       }
     }
     async isDateValid(dateString: string): Promise<boolean> {
-      const [year, month, day] = dateString.split('-');
-      const isValidFormat = /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+      const [day, month, year] = dateString.split('-');
+      const isValidFormat = /^\d{2}-\d{2}-\d{4}$/.test(dateString);
       const isValidDate = Number(day) <= 31 && Number(month) <= 12;
       return isValidFormat && isValidDate;
     }

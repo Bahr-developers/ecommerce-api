@@ -21,7 +21,6 @@ export declare interface LoginRequest {
 export declare interface LoginResponse {
   accessToken: string;
   refreshToken: string;
-  user: User
 }
 
 export declare interface LoginForAdminRequest {

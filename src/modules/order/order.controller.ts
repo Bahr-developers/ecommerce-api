@@ -12,7 +12,7 @@ import {
     UseInterceptors,
   } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-  import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+  import { ApiBearerAuth, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
   import { Category, Order } from '@prisma/client';
 import { PERMISSIONS } from '../constants';
 import { CheckAuth, Permision } from '../decorators';
@@ -35,6 +35,14 @@ import { OrderService } from './order.service';
   
     @CheckAuth(false)
     @Permision(PERMISSIONS.order.get_all_order)
+    @ApiQuery({
+      name:'page',
+      required:false
+    })
+    @ApiQuery({
+      name:'limit',
+      required:false
+    })
     @Get('find/all')
     async getOrderList(
       @Query('page') page?: number,
@@ -54,11 +62,25 @@ import { OrderService } from './order.service';
   
     @CheckAuth(false)
     @Permision(PERMISSIONS.order.filter_order)
+    @ApiQuery({
+      name:'first_date',
+      required:false
+    })
+    @ApiQuery({
+      name:'second_date',
+      required:false
+    })
+    @ApiQuery({
+      name:'status',
+      required:false
+    })
     @Get('filter')
     async getFilteredOrderList(
-      @Body() payload:GetFilteredOrderesRequest
-    ): Promise<Order[]> {
-      return await this.#_service.getFilteredOrderList({...payload});
+      @Query('first_date') first_date?: string,
+      @Query('second_date') second_date?: string,
+      @Query('status') status?: string,
+      ): Promise<Order[]> {
+      return await this.#_service.getFilteredOrderList({first_date, second_date});
     }
   
     @CheckAuth(false)

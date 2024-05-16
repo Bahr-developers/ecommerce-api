@@ -38,7 +38,7 @@ import { PERMISSIONS } from '../constants';
     }
   
     @CheckAuth(false)
-    @Permision(PERMISSIONS.translate.get_translate)
+    @Permision(PERMISSIONS.translate.get_one_translate)
     @Get('find/:id')
     async retrieveSingleTranslate(
       @Param('id') translateId: string,

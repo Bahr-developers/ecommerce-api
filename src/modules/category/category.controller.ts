@@ -43,7 +43,7 @@ import { FileType } from './interfaces';
     }
   
     @CheckAuth(false)
-    @Permision(PERMISSIONS.category.get_category_by_id)
+    @Permision(PERMISSIONS.category.get_one_category)
     @Get('find/:id')
     async getSingleCategoryList(
     @Param('id') categoryId:string,

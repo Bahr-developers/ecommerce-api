@@ -41,7 +41,7 @@ import { PropertyService } from './properties.service';
     }
   
     @CheckAuth(false)
-    @Permision(PERMISSIONS.property.get_property_by_id)
+    @Permision(PERMISSIONS.property.get_one_property)
     @Get('find/:id')
     async getSingleProperty(
     @Param('id') categoryId:string,
