@@ -7,7 +7,7 @@ export const PERMISSIONS = {
     },
     translate: {
       get_all_translates: "get_all_translates",
-      get_translate:"get_translate",
+      get_one_translate:"get_one_translate",
       get_single_translate_by_code:"get_single_translate_by_code",
       search_translate_by_code:"search_translate_by_code",
       create_translate: "create_translate",
@@ -16,7 +16,7 @@ export const PERMISSIONS = {
     },
     category: {
       get_all_categorys: "get_all_categorys",
-      get_category_by_id: "get_category_by_id",
+      get_one_category: "get_one_category",
       create_category: "create_category",
       edit_category: "edit_category",
       delete_category: "delete_category",
@@ -24,7 +24,7 @@ export const PERMISSIONS = {
     },
     property: {
       get_all_propertys: "get_all_propertys",
-      get_property_by_id: "get_property_by_id",
+      get_one_property: "get_one_property",
       create_property: "create_property",
       edit_property: "edit_property",
       delete_property: "delete_property",

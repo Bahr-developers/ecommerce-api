@@ -158,7 +158,6 @@ import { JWT_ACCESS_EXPIRE_TIME, JWT_REFRESH_EXPIRE_TIME, SMS_EXPIRE_TIME } from
         return {
           accessToken,
           refreshToken,
-          user: user,
         };
       }
   
@@ -178,7 +177,6 @@ import { JWT_ACCESS_EXPIRE_TIME, JWT_REFRESH_EXPIRE_TIME, SMS_EXPIRE_TIME } from
       return {
         accessToken,
         refreshToken,
-        user: user,
       };
     }
   

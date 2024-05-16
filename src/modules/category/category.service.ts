@@ -38,6 +38,7 @@ export class CategoryService {
     }
 
     if (payload.category_id) {
+      await this.#_checkCategory(payload.category_id)
       const newCategoriy= await this.#_prisma.category.create({
             data: {
               name: payload.name,
