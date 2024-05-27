@@ -175,12 +175,9 @@ export class TranslateService {
 
   async deleteTranslate(id: string) {
     await this.#_checkUUID(id);
-    await this.#_prisma.translate.delete({
-      where: { id },
-      include: {
-        definition: true,
-      },
-    });
+    await this.#_prisma.translate.update({where: {id: id}, data:{
+      status: 'inactive'
+    }});
   }
 
   async #_checkLanguage(code: string): Promise<void> {

@@ -42,6 +42,7 @@ model Translate {
   code       String        @map("code") @db.VarChar()
   type       TranslateType @map("type")
   createdAt   DateTime     @default(now()) @map("created_at")
+  status      Status        @default(active) @map("status")
   definition Definition[]
 
   @@id([id])

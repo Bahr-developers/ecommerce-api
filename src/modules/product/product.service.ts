@@ -5,7 +5,6 @@ import {
     UnprocessableEntityException,
   } from '@nestjs/common';
   import { Product } from '@prisma/client';
-import { trace } from 'console';
   import { v4 as uuidv4 } from 'uuid';
   import { MinioService } from '../../client';
   import { PrismaService } from '../../prisma';
@@ -394,8 +393,8 @@ import { trace } from 'console';
           .removeFile({ fileName: photo })
           .catch((undefined) => undefined);
       }
- 
       await this.#_prisma.product.delete({where:{id:id}});
+      
     }
   
     async #_checkExistingProduct(title: string): Promise<void> {
