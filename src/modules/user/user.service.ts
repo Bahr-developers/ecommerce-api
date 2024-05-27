@@ -327,6 +327,8 @@ import { isArray, isUUID } from 'class-validator';
     }
   
     async #_checkRoles(roles: string[]): Promise<void> {
+      console.log(roles);
+      
       for (const role of JSON.parse(roles.toString())) {        
         const foundedRole = await this.#_prisma.role.findFirst({
           where: { id: role },

@@ -12,7 +12,7 @@ import {
   import { CreateRoleDto, UpdateRoleDto } from './dtos';
   import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CheckAuth, Permision } from '../decorators';
-import { PERMISSIONS } from '../constants';
+import { PERMISSIONS } from '../../constants';
   
   @ApiBearerAuth("JWT")
   @ApiTags('Roles')

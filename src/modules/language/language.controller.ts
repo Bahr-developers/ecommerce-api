@@ -16,7 +16,7 @@ import { Language } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileType } from '../category/interfaces';
 import { CheckAuth, Permision } from '../decorators';
-import { PERMISSIONS } from '../constants';
+import { PERMISSIONS } from '../../constants';
 
 @ApiTags('Language')
 @Controller({

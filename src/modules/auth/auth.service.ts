@@ -24,7 +24,7 @@ import {
   import { isJWT } from 'class-validator';
   import { UAParser } from 'ua-parser-js';
   import * as bcrypt from 'bcrypt'
-import { JWT_ACCESS_EXPIRE_TIME, JWT_REFRESH_EXPIRE_TIME, SMS_EXPIRE_TIME } from '../constants';
+import { JWT_ACCESS_EXPIRE_TIME, JWT_REFRESH_EXPIRE_TIME, SMS_EXPIRE_TIME } from '../../constants';
   
   @Injectable()
   export class AuthService {

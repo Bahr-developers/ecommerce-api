@@ -35,7 +35,12 @@ import { trace } from 'console';
     async createProduct(payload: CreateProductInterface): Promise<void> {      
       await this.#_checkCategory(payload.category_id);
       
-      const propertyOnProduct = JSON.parse(`${payload.properties}`);      
+      let propertyOnProduct = JSON.parse(`${payload.properties}`);
+      
+      if(typeof propertyOnProduct=='object'){
+          propertyOnProduct = [propertyOnProduct]
+      }
+            
       
       for(const item of propertyOnProduct){
         await this.#_checkProperty(item.property_id)
