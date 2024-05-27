@@ -16,7 +16,7 @@ import {
 import { CheckAuth, Permision } from '../decorators';
 import { CreateModelDto, UpdateModelDto } from './dtos';
 import { ModelService } from './model.service';
-import { PERMISSIONS } from './../constants';
+import { PERMISSIONS } from '../../constants';
   
   @ApiBearerAuth("JWT")
   @ApiTags('Model')

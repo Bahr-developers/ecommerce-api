@@ -15,7 +15,7 @@ import {
   import { Translate } from '@prisma/client';
   import { GetSingleTranslateResponse } from './interfaces';
 import { CheckAuth, Permision } from '../decorators';
-import { PERMISSIONS } from '../constants';
+import { PERMISSIONS } from '../../constants';
   
   @ApiBearerAuth("JWT")
   @ApiTags('Translate')

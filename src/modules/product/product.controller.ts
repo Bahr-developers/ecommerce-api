@@ -22,7 +22,7 @@ import { AddOneProductImageDto } from './dtos/add-one-product-image.dto';
 import { DeleteProductImageDto } from './dtos/delete-one-product-image.dto';
 import { getProductResponse } from './interfaces';
 import { CheckAuth, Permision } from '../decorators';
-import { PERMISSIONS } from '../constants';
+import { PERMISSIONS } from '../../constants';
   
   @ApiTags('Product')
   @Controller({

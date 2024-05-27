@@ -17,11 +17,11 @@ export class PrismaService
     });
   }
 
-  async onModuleInit() {
-    await this.$connect();
+  onModuleInit() {
+     this.$connect();
   }
 
-  async onModuleDestroy() {
-    await this.$disconnect();
+  onModuleDestroy() {
+   this.$disconnect();
   }
 }

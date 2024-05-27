@@ -14,7 +14,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
   import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
   import { Category } from '@prisma/client';
-import { PERMISSIONS } from '../constants';
+import { PERMISSIONS } from '../../constants';
 import { CheckAuth, Permision } from '../decorators';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dtos';

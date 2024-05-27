@@ -14,7 +14,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
   import { ApiBearerAuth, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
   import { Category, Order } from '@prisma/client';
-import { PERMISSIONS } from '../constants';
+import { PERMISSIONS } from '../../constants';
 import { CheckAuth, Permision } from '../decorators';
 import { CreateOrderDto, UpdateOrderDto } from './dtos';
 import { GetFilteredOrderesRequest } from './interfaces';

@@ -13,7 +13,7 @@ import {
   } from '@nestjs/common';
   import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
   import { Permission, Properties } from '@prisma/client';
-import { PERMISSIONS } from '../constants';
+import { PERMISSIONS } from '../../constants';
 import { CheckAuth, Permision } from '../decorators';
 import { CreatePermissionDto, UpdatePermissionDto } from './dtos';
 import { PermissionService } from './permission.service';
